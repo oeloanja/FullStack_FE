@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { Header } from "@/components/Header"
 import { Footer } from "@/components/Footer"
+import { UserProvider } from '../contexts/UserContext'
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -14,6 +15,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
+    <UserProvider>
     <html lang="ko">
       <body className="flex flex-col min-h-screen">
         <Header />
@@ -25,5 +27,6 @@ export default function RootLayout({
         <Footer />
       </body>
     </html>
+    </UserProvider>
   )
 }
