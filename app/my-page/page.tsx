@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/button"
 import { Check } from 'lucide-react'
+import Link from "next/link"
 
 type BankAccount = {
   id: number
@@ -75,17 +76,13 @@ export default function MyPage() {
             </div>
           </div>
 
-          <div className="flex gap-4">
-            <Button 
-              className="flex-1 bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white"
-            >
+          <div className="flex gap-4 ">
+          <Link href="/my-page/change-password" className="w-96 h-10 text-center pt-2 bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-lg">
               비밀번호 변경
-            </Button>
-            <Button 
-              className="flex-1 bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white"
-            >
+            </Link>
+            <Link href="/my-page/change-number" className="w-96 h-10 text-center pt-2 bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-lg">
               전화번호 수정
-            </Button>
+            </Link>
           </div>
         </div>
       )}
@@ -115,12 +112,11 @@ export default function MyPage() {
               </div>
             ))}
           </div>
-          
-          <Button 
-            className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white h-12"
-          >
-            + 계좌 등록
-          </Button>
+          <div className="flex gap-4 place-content-center">
+          <Link href="/my-page/account-register" className="w-96 h-10 text-center pt-2 bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-lg">
+              +계좌 등록
+            </Link>
+            </div>
         </div>
       )}
     </div>

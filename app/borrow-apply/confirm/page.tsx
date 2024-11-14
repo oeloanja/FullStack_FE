@@ -54,7 +54,12 @@ export default function Component() {
             <div className="text-2xl font-bold text-[#23E2C2]">491,667원</div>
           </div>
         </div>
-
+        <div className="py-6">
+          <input
+                type="text"
+                placeholder="대출 희망 금액 입력"
+                className="w-full h-12 px-4 py-2 bg-gray-50 border border-gray-200 rounded-[10px] text-sm" />
+        </div>
         {/* Apply Button */}
         <button className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-lg py-4 text-lg mb-2">
           대출 신청 완료하기
