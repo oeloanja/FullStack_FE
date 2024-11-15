@@ -3,8 +3,10 @@
 import { useState } from "react"
 import { Button } from "@/components/button"
 import { ChevronDown } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 export default function Component() {
+  const router = useRouter()
   const [formData, setFormData] = useState({
     address: "",
     detailAddress: "",
@@ -19,22 +21,26 @@ export default function Component() {
   const [selectedPeriod, setSelectedPeriod] = useState<string>("6개월")
 
   const reasons = [
-    "채무정리",
-    "신용카드",
-    "주택개선(리모델링)",
-    "대환 구매",
-    "의료",
-    "사업",
-    "차량 구매",
-    "휴가",
-    "이주",
-    "집 구매",
-    "결혼",
-    "교육",
-    "기타"
+    "채무정리", "신용카드", "주택개선(리모델링)", "대환 구매", "의료", "사업",
+    "차량 구매", "휴가", "이주", "집 구매", "결혼", "교육", "기타"
   ]
 
   const periods = ["3개월", "6개월", "12개월"]
+
+  const handleSubmit = () => {
+    // 선택된 정보를 로컬 스토리지에 저장
+    localStorage.setItem('loanApplicationData', JSON.stringify({
+      reason: selectedReason,
+      period: selectedPeriod,
+      address: formData.address,
+      detailAddress: formData.detailAddress,
+      accountBank: selectedAccount?.bank,
+      accountNumber: selectedAccount?.accountNumber
+    }))
+    
+    // 다음 페이지로 이동
+    router.push('/borrow-apply/confirm')
+  }
 
   return (
     <div className="flex flex-col min-h-screen p-4">
@@ -222,6 +228,7 @@ export default function Component() {
 
         {/* Bottom Button */}
         <Button 
+          onClick={handleSubmit}
           className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-[10px] h-14 text-lg mt-8"
         >
           신용 평가 받기
