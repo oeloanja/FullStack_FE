@@ -9,6 +9,8 @@
 
 `npm install lucide-react`
 
+`npm install redux react-redux @reduxjs/toolkit` 
+
 ### 실행 명령어
 
 `npm run dev`
