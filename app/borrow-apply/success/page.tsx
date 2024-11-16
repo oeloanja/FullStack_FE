@@ -62,6 +62,11 @@ export default function SuccessPage() {
             >
               홈으로 돌아가기
             </Button>
+            <Button
+              className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white"
+            >
+              대출그룹 신청하기
+            </Button>
           </div>
         </div>
       </main>

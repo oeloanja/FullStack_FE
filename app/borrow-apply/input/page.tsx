@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Button } from "@/components/button"
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Upload } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 export default function Component() {
@@ -19,6 +19,11 @@ export default function Component() {
   const [openDropdown, setOpenDropdown] = useState<'reason' | 'period' | null>(null)
   const [selectedReason, setSelectedReason] = useState<string>("")
   const [selectedPeriod, setSelectedPeriod] = useState<string>("6개월")
+  const [incomeFile, setIncomeFile] = useState<File | null>(null)
+  const [employmentFile, setEmploymentFile] = useState<File | null>(null)
+
+  const incomeFileInputRef = useRef<HTMLInputElement>(null)
+  const employmentFileInputRef = useRef<HTMLInputElement>(null)
 
   const reasons = [
     "채무정리", "신용카드", "주택개선(리모델링)", "대환 구매", "의료", "사업",
@@ -35,11 +40,22 @@ export default function Component() {
       address: formData.address,
       detailAddress: formData.detailAddress,
       accountBank: selectedAccount?.bank,
-      accountNumber: selectedAccount?.accountNumber
+      accountNumber: selectedAccount?.accountNumber,
+      incomeFileName: incomeFile?.name,
+      employmentFileName: employmentFile?.name
     }))
     
     // 다음 페이지로 이동
     router.push('/borrow-apply/confirm')
+  }
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, setFile: (file: File | null) => void) => {
+    const file = event.target.files?.[0]
+    if (file && file.type === 'application/pdf') {
+      setFile(file)
+    } else {
+      alert('PDF 파일만 업로드 가능합니다.')
+    }
   }
 
   return (
@@ -121,15 +137,33 @@ export default function Component() {
             <div>
               <h2 className="text-sm font-medium text-gray-600 mb-2">필수 서류 제출</h2>
               <div className="flex gap-2">
+                <input
+                  type="file"
+                  accept=".pdf"
+                  ref={incomeFileInputRef}
+                  onChange={(e) => handleFileUpload(e, setIncomeFile)}
+                  className="hidden"
+                />
                 <Button 
                   className="flex-1 bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-[10px] h-12"
+                  onClick={() => incomeFileInputRef.current?.click()}
                 >
-                  소득증명원 업로드
+                  <Upload className="w-4 h-4 mr-2" />
+                  {incomeFile ? '소득증명원 업로드 완료' : '소득증명원 업로드'}
                 </Button>
+                <input
+                  type="file"
+                  accept=".pdf"
+                  ref={employmentFileInputRef}
+                  onChange={(e) => handleFileUpload(e, setEmploymentFile)}
+                  className="hidden"
+                />
                 <Button 
                   className="flex-1 bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-[10px] h-12"
+                  onClick={() => employmentFileInputRef.current?.click()}
                 >
-                  재직증명서 업로드
+                  <Upload className="w-4 h-4 mr-2" />
+                  {employmentFile ? '재직증명서 업로드 완료' : '재직증명서 업로드'}
                 </Button>
               </div>
             </div>
