@@ -1,78 +1,102 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { Button } from "@/components/button"
+import { useUser } from "@/contexts/UserContext"
 
-export default function Component() {
+interface LoanHistory {
+  loanId: number;
+  userBorrowId: number;
+  groupId: number | null;
+  loanAmount: number;
+  term: number;
+  intRate: number;
+  issueDate: string | null;
+  createdAt: string;
+  statusType: string;
+}
+
+const getLoanStatusColor = (statusType: string): string => {
+  switch (statusType) {
+    case 'WAITING': return 'text-blue-500';
+    case 'EXECUTING': return 'text-[#23E2C2]';
+    case 'COMPLETED': return 'text-green-500';
+    case 'OVERDUE': return 'text-red-500';
+    case 'REJECTED': return 'text-gray-500';
+    case 'CANCELED': return 'text-gray-400';
+    default: return 'text-gray-400';
+  }
+};
+
+export default function LoanHistoryPage() {
+  const { userBorrowId } = useUser();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [selectedFilter, setSelectedFilter] = useState('전체보기')
-  const loanHistory = [
-    {
-      period: "2024.09.15 - 2025.08.15",
-      amount: "7,000,000원",
-      rate: "18%",
-      status: "대출 중",
-      isActive: true
-    },
-    {
-      period: "2021.10.25 - 2022.09.25",
-      amount: "10,000,000원",
-      rate: "14%",
-      status: "대출 취소",
-      isActive: false
-    },
-    {
-      period: "2021.10.25 - 2022.09.25",
-      amount: "10,000,000원",
-      rate: "14%",
-      status: "상환 완료",
-      isActive: false
-    },
-    {
-      period: "2021.10.25 - 2022.09.25",
-      amount: "10,000,000원",
-      rate: "14%",
-      status: "상환 완료",
-      isActive: false
-    },
-    {
-      period: "2021.10.25 - 2022.09.25",
-      amount: "10,000,000원",
-      rate: "14%",
-      status: "상환 완료",
-      isActive: false
-    },
-    {
-      period: "2021.10.25 - 2022.09.25",
-      amount: "10,000,000원",
-      rate: "14%",
-      status: "상환 완료",
-      isActive: false
-    }
-  ]
+  const [loanHistory, setLoanHistory] = useState<LoanHistory[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchLoanHistory = async () => {
+      setIsLoading(true);
+      try {
+        if (!userBorrowId) {
+          throw new Error('사용자 ID를 찾을 수 없습니다');
+        }
+        const response = await fetch(`/api/v1/loans/history/${userBorrowId}`);
+        if (!response.ok) {
+          throw new Error('대출 이력을 가져오는데 실패했습니다');
+        }
+        const data = await response.json();
+        console.log('API 응답 데이터:', data);
+
+        setLoanHistory(data);
+      } catch (err) {
+        console.error('대출 이력 조회 중 오류 발생:', err);
+        setError(err instanceof Error ? err.message : '오류가 발생했습니다');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLoanHistory();
+  }, [userBorrowId]);
+
+  const formatLoanPeriod = (createdAt: string, term: number) => {
+    const date = new Date(createdAt);
+    const formattedDate = date.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).replace(/\. /g, '.').slice(0, -1);
+    return `${formattedDate}, ${term}개월`;
+  };
+
+  if (isLoading) return <div>로딩 중...</div>;
+  if (error) return <div>오류: {error}</div>;
+
+  console.log('렌더링 직전 loanHistory:', loanHistory);
 
   return (
     <div className="flex flex-col space-y-4 p-4">
-      {/* Credit Grade Card */}
       <div className="border shadow-sm bg-white rounded-2xl p-6 flex justify-between items-start">
         <div>
           <h2 className="text-xl font-bold mb-1">나의 신용등급</h2>
-          <p className="text-sm text-gray-500">최근 업데이트 : 2024.11.13</p>
+          <p className="text-sm text-gray-500">최근 업데이트 : {new Date().toLocaleDateString()}</p>
         </div>
         <div className="w-16 h-16 rounded-full border-4 border-[#23E2C2] flex items-center justify-center">
           <span className="text-3xl font-bold text-[#23E2C2]">B</span>
         </div>
       </div>
 
-      {/* Loan History Card */}
       <div className="border shadow-sm bg-white rounded-2xl p-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold">대출 이력</h2>
           <div className="relative">
             <Button 
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center justify-between bg-white  text-[#23E2C2] border border-[#23E2C2] hover:bg-[#23E2C2] hover:text-white transition-colors px-4 py-2 rounded-2xl"
+              className="flex items-center justify-between bg-white text-[#23E2C2] border border-[#23E2C2] hover:bg-[#23E2C2] hover:text-white transition-colors px-4 py-2 rounded-2xl"
             >
               <span className="text-sm mr-2">{selectedFilter}</span>
               <ChevronDown className="w-4 h-4" />
@@ -107,16 +131,15 @@ export default function Component() {
               </tr>
             </thead>
             <tbody>
-              {loanHistory.map((loan, index) => (
-                <tr key={index} className="border-b border-gray-100 last:border-0">
-                  <td className="py-4 px-4">{loan.period}</td>
-                  <td className="py-4 px-4">{loan.amount}</td>
-                  <td className="py-4 px-4">{loan.rate}</td>
+              {loanHistory.map((loan) => 
+              (
+                <tr key={loan.loanId} className="border-b border-gray-100 last:border-0">
+                  <td className="py-4 px-4">{formatLoanPeriod(loan.createdAt, loan.term)}</td>
+                  <td className="py-4 px-4">{loan.loanAmount.toLocaleString()}원</td>
+                  <td className="py-4 px-4">{loan.intRate.toFixed(2)}%</td>
                   <td className="py-4 px-4 text-right">
-                    <span className={`${
-                      loan.isActive ? 'text-[#23E2C2]' : 'text-gray-400'
-                    }`}>
-                      {loan.status}
+                    <span className={getLoanStatusColor(loan.statusType)}>
+                      {loan.statusType}
                     </span>
                   </td>
                 </tr>

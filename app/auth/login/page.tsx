@@ -3,18 +3,67 @@
 import { useState } from "react"
 import { Button } from "@/components/button"
 import Link from "next/link"
+import { useRouter } from 'next/navigation'
+import { Toast } from "@/components/toast"
+import { useUser } from "@/contexts/UserContext"
 
-export default function Component() {
+interface LoginResponse {
+  id: number;
+  email: string;
+  userName: string;
+  phone: string;
+  creditRating: string | null;
+}
+
+async function loginUser(email: string, password: string, userType: 'borrow' | 'invest'): Promise<LoginResponse> {
+  const response = await fetch(`http://localhost:8085/api/users/${userType}/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (!response.ok) {
+    throw new Error('로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.');
+  }
+
+  return response.json();
+}
+
+export default function LoginPage() {
   const [activeTab, setActiveTab] = useState<'borrower' | 'investor'>('borrower')
   const [formData, setFormData] = useState({
     email: "",
     password: ""
   })
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
+  const { login } = useUser()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle form submission
-    console.log(formData)
+    setIsLoading(true)
+
+    try {
+      const userType = activeTab === 'borrower' ? 'borrow' : 'invest'
+      const response = await loginUser(formData.email, formData.password, userType)
+      
+      // response.id를 userBorrowId로 사용
+      login(activeTab, response.id)
+      setToast({ message: '로그인에 성공했습니다.', type: 'success' })
+      setTimeout(() => router.push('/'), 2000)
+    } catch (error) {
+      console.error('Login error:', error)
+      setToast({ 
+        message: error instanceof Error ? error.message : '로그인에 실패했습니다.', 
+        type: 'error' 
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -54,6 +103,7 @@ export default function Component() {
               <input
                 id="email"
                 type="email"
+                required
                 placeholder="이메일을 입력해주세요"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -67,6 +117,7 @@ export default function Component() {
               <input
                 id="password"
                 type="password"
+                required
                 placeholder="비밀번호를 입력해주세요"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -77,15 +128,15 @@ export default function Component() {
             {/* Submit Button */}
             <Button 
               type="submit"
-              className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white h-12 text-lg rounded-md"
+              disabled={isLoading}
+              className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white h-12 text-lg rounded-md disabled:opacity-50"
             >
-              로그인
+              {isLoading ? '처리중...' : '로그인'}
             </Button>
 
             {/* Forgot Password Link */}
             <div className="text-center">
-              
-                아이디/PW가 기억나지 않으신가요? <Link 
+              아이디/PW가 기억나지 않으신가요? <Link 
                 href="/forgot-password" 
                 className="text-sm text-[#23E2C2]"
               >ID/PW 찾기
@@ -94,6 +145,13 @@ export default function Component() {
           </form>
         </div>
       </main>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   )
 }

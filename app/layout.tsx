@@ -29,6 +29,7 @@ export default function RootLayout({
     <UserProvider>
     <html lang="ko">
       <body className={`${pretendard.variable} font-pretendard`}>
+        <UserProvider>
         <Header />
         <main className="flex-1 w-full">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -36,6 +37,7 @@ export default function RootLayout({
           </div>
         </main>
         <Footer />
+        </UserProvider>
       </body>
     </html>
     </UserProvider>

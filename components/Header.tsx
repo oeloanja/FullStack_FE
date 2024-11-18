@@ -1,11 +1,12 @@
 "use client"
 
+import React from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useUser } from "@/contexts/UserContext"
 
 export function Header() {
-  const { userType } = useUser()
+  const { userType, logout } = useUser()
 
   return (
     <header className="border-b">
@@ -31,6 +32,9 @@ export function Header() {
               <Link href="/auth/select-type" className="text-gray-600 hover:text-[#4FFFD7] transition-colors">
                 시작하기
               </Link>
+              <Link href="/auth/login" className="text-gray-600 hover:text-[#4FFFD7] transition-colors">
+                로그인
+              </Link>
             </>
           )}
           
@@ -39,10 +43,10 @@ export function Header() {
               <Link href="/borrow-apply/input" className="text-gray-600 hover:text-[#4FFFD7] transition-colors">
                 대출 신청
               </Link>
-              <Link href="/borrow-current/history" className="text-gray-600 hover:text-[#4FFFD7] transition-colors">
+              <Link href="/borrow-current" className="text-gray-600 hover:text-[#4FFFD7] transition-colors">
                 대출 현황
               </Link>
-              <Link href="/borrow-current" className="text-gray-600 hover:text-[#4FFFD7] transition-colors">
+              <Link href="/borrow-current/history" className="text-gray-600 hover:text-[#4FFFD7] transition-colors">
                 대출 이력
               </Link>
               <Link href="/my-page" className="text-gray-600 hover:text-[#4FFFD7] transition-colors">
@@ -63,6 +67,15 @@ export function Header() {
                 마이페이지
               </Link>
             </>
+          )}
+
+          {userType !== 'none' && (
+            <button
+              onClick={logout}
+              className="text-gray-600 hover:text-[#4FFFD7] transition-colors"
+            >
+              로그아웃
+            </button>
           )}
         </nav>
       </div>
