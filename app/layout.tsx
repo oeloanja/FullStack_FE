@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Header } from "@/components/Header"
 import { Footer } from "@/components/Footer"
 import { UserProvider } from '../contexts/UserContext'
+import localFont from 'next/font/local'
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -12,6 +13,13 @@ export const metadata: Metadata = {
 	},
 }
 
+const pretendard = localFont({
+  src: 'fonts/PretendardVariable.woff2',
+  display: 'swap',
+  weight: '45 920',
+  variable: '--font-pretendard',
+})
+
 export default function RootLayout({
   children,
 }: {
@@ -20,7 +28,7 @@ export default function RootLayout({
   return (
     <UserProvider>
     <html lang="ko">
-      <body className="flex flex-col min-h-screen">
+      <body className={`${pretendard.variable} font-pretendard`}>
         <Header />
         <main className="flex-1 w-full">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

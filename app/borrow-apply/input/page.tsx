@@ -45,8 +45,9 @@ export default function Component() {
       employmentFileName: employmentFile?.name
     }))
     
-    // 다음 페이지로 이동
-    router.push('/borrow-apply/confirm')
+    // 선택된 기간을 URL 파라미터로 전달
+    const periodInMonths = parseInt(selectedPeriod);
+    router.push(`/borrow-apply/confirm?period=${periodInMonths}`)
   }
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, setFile: (file: File | null) => void) => {
@@ -64,7 +65,7 @@ export default function Component() {
         <h1 className="text-2xl font-bold text-center mb-8">대출 정보 입력</h1>
         
         {/* Progress Bar */}
-        <div className="bg-gray-100 rounded-[80px] py-8 px-6 relative mb-12">
+        <div className="bg-gray-100 rounded-[60px] py-8 px-6 relative mb-12">
           <div className="flex justify-between items-center relative">
             {/* Dotted line */}
             <div className="absolute top-[18px] left-0 right-0 flex justify-between px-8">

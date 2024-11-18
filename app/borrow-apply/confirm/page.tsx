@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-//import { Button } from "@/components/button"
 import { useRouter } from 'next/navigation'
 
 interface LoanApplicationData {
@@ -67,6 +66,8 @@ export default function Component() {
       if (response.ok) {
         const result = await response.json()
         console.log('대출 신청 성공:', result)
+        // 여기서 loanId를 localStorage에 저장
+        localStorage.setItem('loanId', result.loanId.toString())
         router.push('/borrow-apply/success')
       } else {
         console.error('대출 신청 실패:', await response.text())
@@ -84,10 +85,10 @@ export default function Component() {
         <h1 className="text-2xl font-bold text-center mb-8">대출 조건 확인</h1>
         
         {/* Progress Bar */}
-        <div className="bg-gray-100 rounded-[80px] py-8 px-6 relative mb-12">
+        <div className="bg-gray-100 rounded-[60px] py-8 px-6 relative mb-12">
           <div className="flex justify-between items-center relative">
             {/* Dotted line */}
-            <div className="absolute top-[18px] left-0 right-0 flex justify-between px-8">
+            <div className="absolute top-[18px] left-0 right-0 flex justify-between px-8 pt-3">
               {[...Array(33)].map((_, i) => (
                 <div 
                   key={i} 
@@ -97,7 +98,7 @@ export default function Component() {
             </div>
 
             {/* Progress circles and labels */}
-            <div className="flex justify-between w-full relative z-10">
+            <div className="flex justify-between w-full relative z-10 pt-3">
               <div className="flex flex-col items-center">
                 <div className="w-10 h-10 rounded-full bg-[#23E2C2] mb-3" />
                 <span className="text-sm font-medium text-[#23E2C2]">대출 정보 입력</span>
