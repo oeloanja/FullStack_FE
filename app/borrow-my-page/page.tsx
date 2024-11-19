@@ -28,7 +28,7 @@ export default function BorrowerMyPage() {
     const fetchAccounts = async () => {
       if (!user?.userId || userType !== 'borrow') {
         setError('사용자 인증에 실패했습니다. 다시 로그인해주세요.')
-        setTimeout(() => router.push('/auth/login'), 3000)
+        setTimeout(() => router.push('/'), 3000)
         return
       }
 
@@ -58,7 +58,7 @@ export default function BorrowerMyPage() {
 
   const handleLogout = () => {
     logout()
-    router.push('/auth/login')
+    router.push('/')
   }
 
   if (isLoading) {
