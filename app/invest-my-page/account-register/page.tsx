@@ -3,23 +3,36 @@
 import { useState } from "react"
 import { Button } from "@/components/button"
 import { ChevronDown } from 'lucide-react'
+import axios from 'axios'
+import { useRouter } from 'next/navigation'
 
 export default function AccountRegistration() {
+  const router = useRouter()
   const [selectedBank, setSelectedBank] = useState("")
   const [accountNumber, setAccountNumber] = useState("")
+  const [accountHolder, setAccountHolder] = useState("")
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
-  const banks = ["토 은행", "스 은행", "뱅 은행", "크 은행"]
+  const banks = ["신한은행", "국민은행", "우리은행", "하나은행"]
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Here you would typically handle the account registration
-    console.log("Account registration submitted:", { selectedBank, accountNumber })
+    try {
+      const userId = 1;
+      await axios.post(`http://localhost:8085/api/accounts/invest?userId=${userId}`, {
+        bankName: selectedBank,
+        accountNumber,
+        accountHolder
+      });
+      router.push('/invest-my-page')
+    } catch (error) {
+      console.error("Error registering account:", error);
+    }
   }
 
   return (
     <div className="max-w-md mx-auto p-6">
-      <h1 className="text-5xl font-bold text-center mb-8">계좌 등록</h1>
+      <h1 className="text-5xl font-bold text-center mb-8">투자자 계좌 등록</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
@@ -65,6 +78,21 @@ export default function AccountRegistration() {
             value={accountNumber}
             onChange={(e) => setAccountNumber(e.target.value)}
             placeholder="계좌번호를 입력해 주세요."
+            className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm"
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="account-holder" className="block text-sm font-medium text-gray-700">
+            예금주
+          </label>
+          <input
+            id="account-holder"
+            type="text"
+            value={accountHolder}
+            onChange={(e) => setAccountHolder(e.target.value)}
+            placeholder="예금주 이름을 입력해 주세요."
             className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm"
             required
           />

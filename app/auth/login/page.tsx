@@ -5,10 +5,12 @@ import { Button } from "@/components/button"
 import Link from "next/link"
 import { useRouter } from 'next/navigation'
 import { Toast } from "@/components/toast"
+import { useAuth } from "@/contexts/AuthContext"
 import { useUser } from "@/contexts/UserContext"
 
 interface LoginResponse {
-  id: number;
+  id: string;  // 서버에서 'id'로 보내는 경우를 처리
+  userId: string;  // 서버에서 'userId'로 보내는 경우를 처리
   email: string;
   userName: string;
   phone: string;
@@ -16,6 +18,7 @@ interface LoginResponse {
 }
 
 async function loginUser(email: string, password: string, userType: 'borrow' | 'invest'): Promise<LoginResponse> {
+  console.log(`Attempting to login user: ${email}, type: ${userType}`);
   const response = await fetch(`http://localhost:8085/api/users/${userType}/login`, {
     method: 'POST',
     headers: {
@@ -25,11 +28,27 @@ async function loginUser(email: string, password: string, userType: 'borrow' | '
     body: JSON.stringify({ email, password }),
   });
 
+  console.log(`Login API response status: ${response.status}`);
+  
   if (!response.ok) {
-    throw new Error('로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.');
+    const errorData = await response.json();
+    console.error('Login API error:', errorData);
+    throw new Error(errorData.message || '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.');
   }
 
-  return response.json();
+  const data = await response.json();
+  console.log('Login API response data:', data);
+  
+  // id나 userId 중 하나가 반드시 있어야 함
+  if (!data.userId && !data.id) {
+    throw new Error('서버 응답에 userId가 없습니다.');
+  }
+
+  // id를 userId로 변환하여 일관성 유지
+  return {
+    ...data,
+    userId: data.userId || data.id
+  };
 }
 
 export default function LoginPage() {
@@ -41,7 +60,8 @@ export default function LoginPage() {
   const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
-  const { login } = useUser()
+  const { login } = useAuth()
+  const { setUserType } = useUser()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -49,12 +69,36 @@ export default function LoginPage() {
 
     try {
       const userType = activeTab === 'borrower' ? 'borrow' : 'invest'
-      const response = await loginUser(formData.email, formData.password, userType)
+      console.log('Attempting login with type:', userType);
       
-      // response.id를 userBorrowId로 사용
-      login(activeTab, response.id)
+      const response = await loginUser(formData.email, formData.password, userType)
+      console.log('Login response:', response);
+
+      // userId가 문자열인지 확인
+      const userId = String(response.userId)
+      if (!userId) {
+        throw new Error('유효하지 않은 사용자 ID입니다.');
+      }
+      
+      login(
+        userId,
+        userType,
+        {
+          userId,
+          email: response.email,
+          userName: response.userName,
+          phone: response.phone
+        }
+      )
+      
+      setUserType(userType)
+      
       setToast({ message: '로그인에 성공했습니다.', type: 'success' })
-      setTimeout(() => router.push('/'), 2000)
+      
+      setTimeout(() => {
+        console.log('Redirecting to:', userType === 'borrow' ? '/borrow-my-page' : '/invest-my-page');
+        router.push(userType === 'borrow' ? '/borrow-my-page' : '/invest-my-page')
+      }, 1000)
     } catch (error) {
       console.error('Login error:', error)
       setToast({ 
@@ -72,7 +116,6 @@ export default function LoginPage() {
         <div className="w-full max-w-md space-y-8">
           <h1 className="text-3xl font-bold text-center">로그인</h1>
           
-          {/* Login Tabs */}
           <div className="flex border-b">
             <button
               onClick={() => setActiveTab('borrower')}
@@ -97,7 +140,6 @@ export default function LoginPage() {
           </div>
           
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email */}
             <div className="space-y-2">
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">이메일</label>
               <input
@@ -111,7 +153,6 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Password */}
             <div className="space-y-2">
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">비밀번호</label>
               <input
@@ -125,7 +166,6 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Submit Button */}
             <Button 
               type="submit"
               disabled={isLoading}
@@ -134,7 +174,6 @@ export default function LoginPage() {
               {isLoading ? '처리중...' : '로그인'}
             </Button>
 
-            {/* Forgot Password Link */}
             <div className="text-center">
               아이디/PW가 기억나지 않으신가요? <Link 
                 href="/forgot-password" 
