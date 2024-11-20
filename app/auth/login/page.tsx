@@ -9,46 +9,13 @@ import { useAuth } from "@/contexts/AuthContext"
 import { useUser } from "@/contexts/UserContext"
 
 interface LoginResponse {
-  id: string;  // 서버에서 'id'로 보내는 경우를 처리
-  userId: string;  // 서버에서 'userId'로 보내는 경우를 처리
-  email: string;
-  userName: string;
-  phone: string;
-  creditRating: string | null;
-}
-
-async function loginUser(email: string, password: string, userType: 'borrow' | 'invest'): Promise<LoginResponse> {
-  console.log(`Attempting to login user: ${email}, type: ${userType}`);
-  const response = await fetch(`http://localhost:8085/api/users/${userType}/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-    body: JSON.stringify({ email, password }),
-  });
-
-  console.log(`Login API response status: ${response.status}`);
-  
-  if (!response.ok) {
-    const errorData = await response.json();
-    console.error('Login API error:', errorData);
-    throw new Error(errorData.message || '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.');
-  }
-
-  const data = await response.json();
-  console.log('Login API response data:', data);
-  
-  // id나 userId 중 하나가 반드시 있어야 함
-  if (!data.userId && !data.id) {
-    throw new Error('서버 응답에 userId가 없습니다.');
-  }
-
-  // id를 userId로 변환하여 일관성 유지
-  return {
-    ...data,
-    userId: data.userId || data.id
+  user: {
+    id: number;
+    email: string;
+    userName: string;
+    phone: string;
   };
+  token: string;
 }
 
 export default function LoginPage() {
@@ -63,44 +30,49 @@ export default function LoginPage() {
   const { login } = useAuth()
   const { setUserType } = useUser()
 
+  const API_BASE_URL = 'http://localhost:8085/api';
+
+  async function loginUser(email: string, password: string, userType: 'borrow' | 'invest'): Promise<LoginResponse> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/${userType}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('API 호출 중 오류 발생:', error);
+      throw error;
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setToast(null)
 
     try {
       const userType = activeTab === 'borrower' ? 'borrow' : 'invest'
-      console.log('Attempting login with type:', userType);
-      
       const response = await loginUser(formData.email, formData.password, userType)
-      console.log('Login response:', response);
 
-      // userId가 문자열인지 확인
-      const userId = String(response.userId)
-      if (!userId) {
-        throw new Error('유효하지 않은 사용자 ID입니다.');
-      }
-      
-      login(
-        userId,
-        userType,
-        {
-          userId,
-          email: response.email,
-          userName: response.userName,
-          phone: response.phone
-        }
-      )
+      // login 함수 호출 시 필요한 인자만 전달
+      login(response.token, userType, response.user)
       
       setUserType(userType)
-      
       setToast({ message: '로그인에 성공했습니다.', type: 'success' })
-      
-      setTimeout(() => {
-        console.log('Redirecting to:', userType === 'borrow' ? '/borrow-my-page' : '/invest-my-page');
-        router.push(userType === 'borrow' ? '/borrow-my-page' : '/invest-my-page')
-      }, 1000)
+      router.push(userType === 'borrow' ? '/borrow-my-page' : '/invest-my-page')
     } catch (error) {
-      console.error('Login error:', error)
+      console.error('로그인 오류:', error)
       setToast({ 
         message: error instanceof Error ? error.message : '로그인에 실패했습니다.', 
         type: 'error' 
@@ -110,6 +82,7 @@ export default function LoginPage() {
     }
   }
 
+  // JSX 부분은 이전과 동일하게 유지
   return (
     <div className="flex-1 flex flex-col h-fit">
       <main className="flex-1 flex flex-col items-center justify-center px-4">

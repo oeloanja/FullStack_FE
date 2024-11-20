@@ -6,14 +6,18 @@ import { Check } from 'lucide-react'
 import Link from "next/link"
 import { useAuth } from "@/contexts/AuthContext"
 import { useRouter } from 'next/navigation'
-import axios from 'axios'
 
 type BankAccount = {
   id: number
   bankName: string
   accountNumber: string
   accountHolder: string
+  balance: number
+  createdAt: string
+  updatedAt: string
 }
+
+const API_BASE_URL = 'http://localhost:8085/api';
 
 export default function BorrowerMyPage() {
   const [activeTab, setActiveTab] = useState<'personal' | 'account'>('personal')
@@ -21,63 +25,109 @@ export default function BorrowerMyPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const { user, logout, userType } = useAuth()
+  const { user, userType } = useAuth()
   const router = useRouter()
+
+  const fetchWithAuth = async (endpoint: string, options: RequestInit = {}) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('토큰을 찾을 수 없습니다');
+    }
+
+    const headers = new Headers(options.headers);
+    headers.set('Authorization', `Bearer ${token}`);
+    headers.set('Content-Type', 'application/json');
+
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || '오류가 발생했습니다');
+    }
+
+    return response.json();
+  };
 
   useEffect(() => {
     const fetchAccounts = async () => {
-      if (!user?.userId || userType !== 'borrow') {
-        setError('사용자 인증에 실패했습니다. 다시 로그인해주세요.')
-        setTimeout(() => router.push('/'), 3000)
-        return
+      if (!user?.id || userType !== 'borrow') {
+        setError('사용자 인증에 실패했습니다. 다시 로그인해주세요.');
+        setIsLoading(false);
+        return;
       }
 
       try {
-        const response = await axios.get(`http://localhost:8085/api/accounts/borrow?userId=${user.userId}`)
-        setAccounts(response.data)
+        const accountsData = await fetchWithAuth(`/accounts/borrow?userId=${user.id}`);
+        setAccounts(accountsData);
+        setIsLoading(false);
       } catch (err) {
-        console.error("Error fetching accounts:", err)
-        setError('계좌 정보를 불러오는 데 실패했습니다.')
-      } finally {
-        setIsLoading(false)
+        console.error("계좌 데이터 조회 오류:", err);
+        setError('계좌 데이터를 불러오는데 실패했습니다. 다시 시도해 주세요.');
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchAccounts()
-  }, [user, userType, router])
+    fetchAccounts();
+  }, [user, userType]);
 
   const handleDeleteAccount = async (id: number) => {
-    try {
-      await axios.put(`http://localhost:8085/api/accounts/borrow/${id}/status?userId=${user?.userId}`, { isDeleted: true })
-      setAccounts(accounts.filter(account => account.id !== id))
-    } catch (error) {
-      console.error("Error deleting account:", error)
-      setError('계좌 삭제 중 오류가 발생했습니다.')
-    }
-  }
+    if (!user?.id) return;
 
-  const handleLogout = () => {
-    logout()
-    router.push('/')
-  }
+    try {
+      const response = await fetch(`${API_BASE_URL}/accounts/borrow/${id}/status?userId=${user.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ isDeleted: true }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // 성공적으로 삭제된 경우 UI 업데이트
+      setAccounts(prevAccounts => prevAccounts.filter(account => account.id !== id));
+    } catch (error) {
+      console.error("계좌 삭제 오류:", error);
+      setError('계좌 삭제에 실패했습니다. 다시 시도해 주세요.');
+    }
+  };
 
   if (isLoading) {
-    return <div className="text-center mt-8">로딩 중...</div>
+    return <div className="text-center mt-8">로딩 중...</div>;
   }
 
   if (error) {
-    return <div className="text-center mt-8 text-red-500">{error}</div>
+    return (
+      <div className="text-center mt-8">
+        <p className="text-red-500">{error}</p>
+        <Button onClick={() => setError(null)} className="mt-4">
+          다시 시도
+        </Button>
+      </div>
+    );
   }
 
   if (!user || userType !== 'borrow') {
-    return <div className="text-center mt-8">사용자 정보를 불러올 수 없습니다.</div>
+    return (
+      <div className="text-center mt-8">
+        <p>사용자 정보를 불러올 수 없습니다.</p>
+        <Button onClick={() => router.push('/login')} className="mt-4">
+          로그인 페이지로 이동
+        </Button>
+      </div>
+    );
   }
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-center items-center mb-8 ">
         <h1 className="text-5xl font-bold">대출자 마이페이지</h1>
-        <Button onClick={handleLogout} variant="outline">로그아웃</Button>
       </div>
 
       <div className="flex border-b mb-8">
@@ -89,7 +139,7 @@ export default function BorrowerMyPage() {
               : 'text-gray-500'
           }`}
         >
-          계정 정보 관리
+          개인 정보
         </button>
         <button
           onClick={() => setActiveTab('account')}
@@ -99,7 +149,7 @@ export default function BorrowerMyPage() {
               : 'text-gray-500'
           }`}
         >
-          계좌 정보 관리
+          계좌 정보
         </button>
       </div>
 
@@ -150,14 +200,14 @@ export default function BorrowerMyPage() {
                   variant="outline"
                   className="w-full bg-gray-100"
                 >
-                  삭제하기
+                  삭제
                 </Button>
               </div>
             ))}
           </div>
           <div className="flex gap-4 place-content-center">
             <Link href="/borrow-my-page/account-register" className="w-96 h-10 text-center pt-2 bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-lg">
-              +계좌 등록
+              + 계좌 등록
             </Link>
           </div>
         </div>
