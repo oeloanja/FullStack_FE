@@ -2,6 +2,7 @@
 
 import { useRef } from "react"
 import { useRouter } from 'next/navigation'
+import api from '@/utils/api'
 
 export function LoanConfirmationForm({ period }: { period: number }) {
   const router = useRouter()
@@ -25,16 +26,10 @@ export function LoanConfirmationForm({ period }: { period: number }) {
     }
 
     try {
-      const response = await fetch('/api/v1/loans/register/success', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(loanRequestData),
-      })
+      const response = await api.post('/loan/v1/loans/register/success', loanRequestData)
 
-      if (response.ok) {
-        const result = await response.json()
+      if (response.status === 200) {
+        const result = response.data
         console.log('대출 신청 성공:', result)
         localStorage.setItem('loanId', result.loanId.toString())
         
@@ -45,7 +40,7 @@ export function LoanConfirmationForm({ period }: { period: number }) {
         
         router.push('/borrow-apply/success')
       } else {
-        console.error('대출 신청 실패:', await response.text())
+        console.error('대출 신청 실패:', response.data)
         alert('대출 신청에 실패했습니다. 다시 시도해 주세요.')
       }
     } catch (error) {

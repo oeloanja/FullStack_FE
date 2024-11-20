@@ -5,33 +5,11 @@ import { Button } from "@/components/button"
 import { ChevronDown } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from "@/contexts/AuthContext"
+import { useUser } from "@/contexts/UserContext"
+import api from '@/utils/api'
+import { getToken } from '@/utils/auth'
 
 const banks = ["토스뱅크", "신한은행", "국민은행", "우리은행", "하나은행", "농협은행"]
-
-const API_BASE_URL = 'http://localhost:8085/api';
-
-const fetchWithAuth = async (endpoint: string, options: RequestInit = {}) => {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    throw new Error('인증 토큰을 찾을 수 없습니다');
-  }
-
-  const headers = new Headers(options.headers);
-  headers.set('Authorization', `Bearer ${token}`);
-  headers.set('Content-Type', 'application/json');
-
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || '오류가 발생했습니다');
-  }
-
-  return response.json();
-};
 
 export default function AccountRegistration() {
   const [selectedBank, setSelectedBank] = useState("")
@@ -43,13 +21,14 @@ export default function AccountRegistration() {
 
   const router = useRouter()
   const { user } = useAuth()
+  const { userBorrowId } = useUser()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
 
-    if (!user?.id) {
+    if (!userBorrowId) {
       setError("인증 정보를 찾을 수 없습니다. 다시 로그인해 주세요.")
       setIsLoading(false)
       return
@@ -61,19 +40,31 @@ export default function AccountRegistration() {
       return
     }
 
+    const token = getToken()
+    if (!token) {
+      setError("인증 토큰이 없습니다. 다시 로그인해 주세요.")
+      setIsLoading(false)
+      return
+    }
+
     try {
-      await fetchWithAuth(`/accounts/borrow?userId=${user.id}`, {
-        method: 'POST',
-        body: JSON.stringify({
+      await api.post(`/api/v1/user_service/accounts/borrow`, 
+        {
           bankName: selectedBank,
           accountNumber,
           accountHolder
-        }),
-      })
+        },
+        {
+          params: { userId: userBorrowId },
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      )
       router.push('/borrow-my-page')
     } catch (error) {
       console.error("계좌 등록 오류:", error)
-      setError(error instanceof Error ? error.message : "계좌 등록에 실패했습니다. 다시 시도해 주세요.")
+      setError("계좌 등록에 실패했습니다. 다시 시도해 주세요.")
     } finally {
       setIsLoading(false)
     }

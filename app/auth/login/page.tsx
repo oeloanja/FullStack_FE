@@ -7,15 +7,17 @@ import { useRouter } from 'next/navigation'
 import { Toast } from "@/components/toast"
 import { useAuth } from "@/contexts/AuthContext"
 import { useUser } from "@/contexts/UserContext"
+import api from '@/utils/api'
 
 interface LoginResponse {
   user: {
-    id: number;
-    email: string;
-    userName: string;
-    phone: string;
-  };
-  token: string;
+    id: number
+    email: string
+    userName: string
+    phone: string
+    userBorrowId?: number // 대출자 ID 추가
+  }
+  token: string
 }
 
 export default function LoginPage() {
@@ -28,31 +30,30 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const { login } = useAuth()
-  const { setUserType } = useUser()
-
-  const API_BASE_URL = 'http://localhost:8085/api';
+  const { setUserType, setUserBorrowId } = useUser()
 
   async function loginUser(email: string, password: string, userType: 'borrow' | 'invest'): Promise<LoginResponse> {
     try {
-      const response = await fetch(`${API_BASE_URL}/users/${userType}/login`, {
+      const response = await api.post(`api/v1/user_service/users/${userType}/login`,
+      ({ email, password }),
+      {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+        }
+      })
 
-      const data = await response.json();
+      const data = await response.data
       
-      if (!response.ok) {
-        throw new Error(data.message || '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.');
+      if (response.status!==200) {
+        throw new Error(data.message || '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.')
       }
 
-      return data;
+      return data
     } catch (error) {
-      console.error('API 호출 중 오류 발생:', error);
-      throw error;
+      console.error('API 호출 중 오류 발생:', error)
+      throw error
     }
   }
 
@@ -65,10 +66,16 @@ export default function LoginPage() {
       const userType = activeTab === 'borrower' ? 'borrow' : 'invest'
       const response = await loginUser(formData.email, formData.password, userType)
 
-      // login 함수 호출 시 필요한 인자만 전달
+      // userBorrowId 설정 추가
+      if (userType === 'borrow' && response.user.userBorrowId) {
+        setUserBorrowId(response.user.userBorrowId)
+      } else {
+        setUserBorrowId(null)
+      }
+
       login(response.token, userType, response.user)
-      
       setUserType(userType)
+      
       setToast({ message: '로그인에 성공했습니다.', type: 'success' })
       router.push(userType === 'borrow' ? '/borrow-my-page' : '/invest-my-page')
     } catch (error) {
@@ -82,7 +89,6 @@ export default function LoginPage() {
     }
   }
 
-  // JSX 부분은 이전과 동일하게 유지
   return (
     <div className="flex-1 flex flex-col h-fit">
       <main className="flex-1 flex flex-col items-center justify-center px-4">

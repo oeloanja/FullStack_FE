@@ -4,33 +4,34 @@ import { useState, useEffect } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { Button } from "@/components/button"
 import { useUser } from "@/contexts/UserContext"
+import { fetchWithAuth } from '@/utils/api'
 
 interface LoanHistory {
-  loanId: number;
-  userBorrowId: number;
-  groupId: number | null;
-  loanAmount: number;
-  term: number;
-  intRate: number;
-  issueDate: string | null;
-  createdAt: string;
-  statusType: string;
+  loanId: number
+  userBorrowId: number
+  groupId: number | null
+  loanAmount: number
+  term: number
+  intRate: number
+  issueDate: string | null
+  createdAt: string
+  statusType: string
 }
 
 const getLoanStatusColor = (statusType: string): string => {
   switch (statusType) {
-    case 'WAITING': return 'text-blue-500';
-    case 'EXECUTING': return 'text-[#23E2C2]';
-    case 'COMPLETED': return 'text-green-500';
-    case 'OVERDUE': return 'text-red-500';
-    case 'REJECTED': return 'text-gray-500';
-    case 'CANCELED': return 'text-gray-400';
-    default: return 'text-gray-400';
+    case 'WAITING': return 'text-blue-500'
+    case 'EXECUTING': return 'text-[#23E2C2]'
+    case 'COMPLETED': return 'text-green-500'
+    case 'OVERDUE': return 'text-red-500'
+    case 'REJECTED': return 'text-gray-500'
+    case 'CANCELED': return 'text-gray-400'
+    default: return 'text-gray-400'
   }
-};
+}
 
 export default function LoanHistoryPage() {
-  const { userBorrowId } = useUser();
+  const { userBorrowId } = useUser()
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [selectedFilter, setSelectedFilter] = useState('전체보기')
   const [loanHistory, setLoanHistory] = useState<LoanHistory[]>([])
@@ -39,44 +40,40 @@ export default function LoanHistoryPage() {
 
   useEffect(() => {
     const fetchLoanHistory = async () => {
-      setIsLoading(true);
+      setIsLoading(true)
       try {
         if (!userBorrowId) {
-          throw new Error('사용자 ID를 찾을 수 없습니다');
+          throw new Error('사용자 ID를 찾을 수 없습니다')
         }
-        const response = await fetch(`/api/v1/loans/history/${userBorrowId}`);
-        if (!response.ok) {
-          throw new Error('대출 이력을 가져오는데 실패했습니다');
-        }
-        const data = await response.json();
-        console.log('API 응답 데이터:', data);
-
-        setLoanHistory(data);
+        const data = await fetchWithAuth(`/loan/v1/loans/history/${userBorrowId}`)
+        console.log('API 응답 데이터:', data)
+        setLoanHistory(data)
       } catch (err) {
-        console.error('대출 이력 조회 중 오류 발생:', err);
-        setError(err instanceof Error ? err.message : '오류가 발생했습니다');
+        console.error('대출 이력 조회 중 오류 발생:', err)
+        setError(err instanceof Error ? err.message : '오류가 발생했습니다')
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
+    }
 
-    fetchLoanHistory();
-  }, [userBorrowId]);
+    if (userBorrowId) {
+      fetchLoanHistory()
+    }
+  }, [userBorrowId])
 
   const formatLoanPeriod = (createdAt: string, term: number) => {
-    const date = new Date(createdAt);
+    const date = new Date(createdAt)
     const formattedDate = date.toLocaleDateString('ko-KR', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit'
-    }).replace(/\. /g, '.').slice(0, -1);
-    return `${formattedDate}, ${term}개월`;
-  };
+    }).replace(/\. /g, '.').slice(0, -1)
+    return `${formattedDate}, ${term}개월`
+  }
 
-  if (isLoading) return <div>로딩 중...</div>;
-  if (error) return <div>오류: {error}</div>;
-
-  console.log('렌더링 직전 loanHistory:', loanHistory);
+  if (isLoading) return <div className="p-4">로딩 중...</div>
+  if (error) return <div className="p-4 text-red-500">오류: {error}</div>
+  if (!userBorrowId) return <div className="p-4">사용자 정보를 찾을 수 없습니다.</div>
 
   return (
     <div className="flex flex-col space-y-4 p-4">
@@ -131,8 +128,7 @@ export default function LoanHistoryPage() {
               </tr>
             </thead>
             <tbody>
-              {loanHistory.map((loan) => 
-              (
+              {loanHistory.map((loan) => (
                 <tr key={loan.loanId} className="border-b border-gray-100 last:border-0">
                   <td className="py-4 px-4">{formatLoanPeriod(loan.createdAt, loan.term)}</td>
                   <td className="py-4 px-4">{loan.loanAmount.toLocaleString()}원</td>

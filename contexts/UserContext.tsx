@@ -1,58 +1,83 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useAuth } from './AuthContext';
+import React, { createContext, useContext, useState, useEffect } from 'react'
+import { useAuth } from './AuthContext'
 
-type UserType = 'borrow' | 'invest' | null;
+type UserType = 'borrow' | 'invest' | null
 
 interface UserContextType {
-  userType: UserType;
-  setUserType: (type: UserType) => void;
+  userType: UserType
+  userBorrowId: number | null
+  setUserType: (type: UserType) => void
+  setUserBorrowId: (id: number | null) => void
 }
 
-const UserContext = createContext<UserContextType | undefined>(undefined);
+const UserContext = createContext<UserContextType | undefined>(undefined)
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [userType, setUserType] = useState<UserType>(null);
-  const { user } = useAuth();
+  const [userType, setUserType] = useState<UserType>(null)
+  const [userBorrowId, setUserBorrowId] = useState<number | null>(null)
+  const { user } = useAuth()
 
   useEffect(() => {
-    // Try to get userType from localStorage on mount
-    const storedUserType = localStorage.getItem('userType') as UserType;
+    const storedUserType = localStorage.getItem('userType') as UserType
+    const storedUserBorrowId = localStorage.getItem('userBorrowId')
+    
     if (storedUserType) {
-      setUserType(storedUserType);
+      setUserType(storedUserType)
     }
-  }, []);
+    if (storedUserBorrowId) {
+      setUserBorrowId(Number(storedUserBorrowId))
+    }
+  }, [])
 
-  // Reset userType when user logs out
   useEffect(() => {
     if (!user) {
-      setUserType(null);
-      localStorage.removeItem('userType');
+      setUserType(null)
+      setUserBorrowId(null)
+      localStorage.removeItem('userType')
+      localStorage.removeItem('userBorrowId')
     }
-  }, [user]);
+  }, [user])
 
   const updateUserType = (type: UserType) => {
-    console.log('Updating userType to:', type); // 디버깅용
-    setUserType(type);
+    console.log('사용자 타입 업데이트:', type)
+    setUserType(type)
     if (type) {
-      localStorage.setItem('userType', type);
+      localStorage.setItem('userType', type)
     } else {
-      localStorage.removeItem('userType');
+      localStorage.removeItem('userType')
     }
-  };
+  }
+
+  const updateUserBorrowId = (id: number | null) => {
+    console.log('사용자 대출 ID 업데이트:', id)
+    setUserBorrowId(id)
+    if (id !== null) {
+      localStorage.setItem('userBorrowId', id.toString())
+    } else {
+      localStorage.removeItem('userBorrowId')
+    }
+  }
 
   return (
-    <UserContext.Provider value={{ userType, setUserType: updateUserType }}>
+    <UserContext.Provider 
+      value={{ 
+        userType, 
+        userBorrowId,
+        setUserType: updateUserType,
+        setUserBorrowId: updateUserBorrowId
+      }}
+    >
       {children}
     </UserContext.Provider>
-  );
-};
+  )
+}
 
 export const useUser = () => {
-  const context = useContext(UserContext);
+  const context = useContext(UserContext)
   if (context === undefined) {
-    throw new Error('useUser must be used within a UserProvider');
+    throw new Error('useUser는 UserProvider 내에서 사용되어야 합니다')
   }
-  return context;
-};
+  return context
+}
