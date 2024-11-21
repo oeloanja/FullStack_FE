@@ -56,6 +56,7 @@ export default function AccountRegistration() {
           params: { userId: userBorrowId },
           headers: {
             'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
         }
       )

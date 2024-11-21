@@ -8,7 +8,6 @@ export default function ChangePhoneNumber() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Here you would typically handle the phone number change
     console.log("Phone number change submitted:", phoneNumber)
   }
 

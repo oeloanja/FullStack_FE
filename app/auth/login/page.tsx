@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { Toast } from "@/components/toast"
 import { useAuth } from "@/contexts/AuthContext"
 import { useUser } from "@/contexts/UserContext"
+import { useToken } from '@/hooks/useToken'
 import api from '@/utils/api'
 
 interface LoginResponse {
@@ -15,9 +16,9 @@ interface LoginResponse {
     email: string
     userName: string
     phone: string
-    userBorrowId?: number // 대출자 ID 추가
+    userBorrowId?: number
   }
-  token: string
+  accessToken: string
 }
 
 export default function LoginPage() {
@@ -31,6 +32,7 @@ export default function LoginPage() {
   const router = useRouter()
   const { login } = useAuth()
   const { setUserType, setUserBorrowId } = useUser()
+  const { setToken } = useToken()
 
   async function loginUser(email: string, password: string, userType: 'borrow' | 'invest'): Promise<LoginResponse> {
     try {
@@ -46,7 +48,7 @@ export default function LoginPage() {
 
       const data = await response.data
       
-      if (response.status!==200) {
+      if (response.status !== 200) {
         throw new Error(data.message || '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.')
       }
 
@@ -66,18 +68,23 @@ export default function LoginPage() {
       const userType = activeTab === 'borrower' ? 'borrow' : 'invest'
       const response = await loginUser(formData.email, formData.password, userType)
 
-      // userBorrowId 설정 추가
+      if (response.accessToken) {
+        setToken(response.accessToken)  // Ensure accessToken is set
+      } else {
+        throw new Error('토큰을 가져오지 못했습니다.')
+      }
+
       if (userType === 'borrow' && response.user.userBorrowId) {
         setUserBorrowId(response.user.userBorrowId)
       } else {
         setUserBorrowId(null)
       }
 
-      login(response.token, userType, response.user)
+      login(response.accessToken, userType, response.user)
       setUserType(userType)
       
       setToast({ message: '로그인에 성공했습니다.', type: 'success' })
-      router.push(userType === 'borrow' ? '/borrow-my-page' : '/invest-my-page')
+      router.push('/')
     } catch (error) {
       console.error('로그인 오류:', error)
       setToast({ 

@@ -6,9 +6,9 @@ import { Check } from 'lucide-react'
 import Link from "next/link"
 import { useAuth } from "@/contexts/AuthContext"
 import { useUser } from "@/contexts/UserContext"
+import { useToken } from "@/hooks/useToken"
 import { useRouter } from 'next/navigation'
 import api from '@/utils/api'
-import { getToken } from '@/utils/auth'
 
 type BankAccount = {
   id: number
@@ -28,6 +28,7 @@ export default function BorrowerMyPage() {
 
   const { user, userType } = useAuth()
   const { userBorrowId } = useUser()
+  const { token } = useToken()
   const router = useRouter()
 
   useEffect(() => {
@@ -38,7 +39,6 @@ export default function BorrowerMyPage() {
         return
       }
 
-      const token = getToken()
       if (!token) {
         setError('인증 토큰이 없습니다. 다시 로그인해주세요.')
         setIsLoading(false)
@@ -68,12 +68,11 @@ export default function BorrowerMyPage() {
     }
 
     fetchAccounts()
-  }, [userBorrowId, userType])
+  }, [userBorrowId, userType, token])
 
   const handleDeleteAccount = async (id: number) => {
     if (!userBorrowId) return
 
-    const token = getToken()
     if (!token) {
       setError('인증 토큰이 없습니다. 다시 로그인해주세요.')
       return
@@ -86,6 +85,7 @@ export default function BorrowerMyPage() {
           params: { userId: userBorrowId },
           headers: {
             'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
         }
       )
