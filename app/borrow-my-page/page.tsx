@@ -1,13 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/button"
 import { Check } from 'lucide-react'
 import Link from "next/link"
 import { useAuth } from "@/contexts/AuthContext"
 import { useUser } from "@/contexts/UserContext"
-import { useToken } from "@/hooks/useToken"
-import { useRouter } from 'next/navigation'
+import { useToken } from "@/contexts/TokenContext"
+import { useRouter, useSearchParams } from 'next/navigation'
 import api from '@/utils/api'
 
 type BankAccount = {
@@ -20,66 +20,122 @@ type BankAccount = {
   updatedAt: string
 }
 
+type UserInfo = {
+  email: string
+  userName: string
+  phone: string
+}
+
 export default function BorrowerMyPage() {
   const [activeTab, setActiveTab] = useState<'personal' | 'account'>('personal')
   const [accounts, setAccounts] = useState<BankAccount[]>([])
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const { user, userType } = useAuth()
+  const { userType } = useAuth()
   const { userBorrowId } = useUser()
   const { token } = useToken()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const refresh = searchParams.get('refresh')
 
-  useEffect(() => {
-    const fetchAccounts = async () => {
-      if (!userBorrowId || userType !== 'borrow') {
-        setError('사용자 인증에 실패했습니다. 다시 로그인해주세요.')
-        setIsLoading(false)
-        return
-      }
-
-      if (!token) {
-        setError('인증 토큰이 없습니다. 다시 로그인해주세요.')
-        setIsLoading(false)
-        return
-      }
-
-      try {
-        const response = await api.get(`/api/v1/user_service/accounts/borrow`, {
-          params: { userId: userBorrowId },
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        })
-        if (response.data && Array.isArray(response.data)) {
-          setAccounts(response.data)
-        } else {
-          setAccounts([])
-        }
-        setError(null)
-        setIsLoading(false)
-      } catch (err) {
-        console.error("계좌 데이터 조회 오류:", err)
-        setError('계좌 데이터를 불러오는데 실패했습니다. 다시 시도해 주세요.')
-        setIsLoading(false)
-      }
+  const fetchUserData = useCallback(async () => {
+    if (!userBorrowId || !token) {
+      console.error('사용자 ID 또는 토큰이 없습니다:', { userBorrowId, token })
+      setError('사용자 정보를 불러올 수 없습니다. 다시 로그인해주세요.')
+      return
     }
 
-    fetchAccounts()
-  }, [userBorrowId, userType, token])
+    try {
+      console.log('사용자 정보 요청 시작:', { userBorrowId, token: token.slice(0, 10) + '...' })
+      const response = await api.get(`/api/v1/user_service/users/borrow/mypage`, {
+        params: { userId: userBorrowId },
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      console.log('사용자 정보 응답:', response)
 
-  const handleDeleteAccount = async (id: number) => {
-    if (!userBorrowId) return
+      if (response.status === 200 && response.data) {
+        console.log('사용자 정보 성공적으로 받음:', response.data)
+        setUserInfo(response.data)
+      } else {
+        console.error('사용자 정보 응답이 예상과 다릅니다:', response)
+        throw new Error('사용자 정보를 불러오는데 실패했습니다.')
+      }
+    } catch (error) {
+      console.error("사용자 정보 조회 오류:", error)
+      setError('사용자 정보를 불러오는데 실패했습니다. 네트워크 연결을 확인하고 다시 시도해주세요.')
+    }
+  }, [userBorrowId, token])
+
+  const fetchAccounts = useCallback(async () => {
+    if (!userBorrowId || userType !== 'borrow') {
+      console.error('사용자 인증 실패:', { userBorrowId, userType })
+      setError('사용자 인증에 실패했습니다. 다시 로그인해주세요.')
+      setIsLoading(false)
+      return
+    }
 
     if (!token) {
+      console.error('토큰이 없습니다.')
+      setError('인증 토큰이 없습니다. 다시 로그인해주세요.')
+      setIsLoading(false)
+      return
+    }
+
+    try {
+      console.log('계좌 정보 요청 시작:', { userBorrowId, token: token.slice(0, 10) + '...' })
+      const response = await api.get(`/api/v1/user_service/accounts/borrow`, {
+        params: { userId: userBorrowId },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      console.log('계좌 정보 응답:', response)
+
+      if (response.status === 200 && Array.isArray(response.data)) {
+        console.log('계좌 정보 성공적으로 받음:', response.data)
+        setAccounts(response.data)
+      } else {
+        console.log('계좌 정보가 없거나 예상과 다릅니다:', response)
+        setAccounts([])
+      }
+      setError(null)
+    } catch (err) {
+      console.error("계좌 데이터 조회 오류:", err)
+      setError('계좌 데이터를 불러오는데 실패했습니다. 다시 시도해 주세요.')
+    }
+  }, [userBorrowId, userType, token])
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true)
+      await fetchUserData()
+      await fetchAccounts()
+      setIsLoading(false)
+    }
+    fetchData()
+  }, [fetchUserData, fetchAccounts, refresh])
+
+  const handleDeleteAccount = async (id: number) => {
+    if (!userBorrowId) {
+      console.error('사용자 ID가 없습니다.')
+      return
+    }
+
+    if (!token) {
+      console.error('토큰이 없습니다.')
       setError('인증 토큰이 없습니다. 다시 로그인해주세요.')
       return
     }
 
     try {
-      await api.put(`/api/v1/user_service/accounts/borrow/${id}/status`, 
+      console.log('계좌 삭제 요청 시작:', { accountId: id, userBorrowId, token: token.slice(0, 10) + '...' })
+      const response = await api.put(`/api/v1/user_service/accounts/borrow/${id}/status`, 
         { isDeleted: true },
         {
           params: { userId: userBorrowId },
@@ -89,6 +145,7 @@ export default function BorrowerMyPage() {
           }
         }
       )
+      console.log('계좌 삭제 응답:', response)
       setAccounts(prevAccounts => prevAccounts.filter(account => account.id !== id))
     } catch (error) {
       console.error("계좌 삭제 오류:", error)
@@ -104,14 +161,18 @@ export default function BorrowerMyPage() {
     return (
       <div className="text-center mt-8">
         <p className="text-red-500">{error}</p>
-        <Button onClick={() => setError(null)} className="mt-4">
+        <Button onClick={() => {
+          setError(null)
+          fetchUserData()
+          fetchAccounts()
+        }} className="mt-4">
           다시 시도
         </Button>
       </div>
     )
   }
 
-  if (!user || userType !== 'borrow' || !userBorrowId) {
+  if (!userInfo || userType !== 'borrow' || !userBorrowId) {
     return (
       <div className="text-center mt-8">
         <p>사용자 정보를 불러올 수 없습니다.</p>
@@ -156,15 +217,15 @@ export default function BorrowerMyPage() {
           <div className="space-y-4">
             <div className="flex items-center">
               <span className="w-24 text-gray-600">이메일</span>
-              <span>{user.email}</span>
+              <span>{userInfo.email}</span>
             </div>
             <div className="flex items-center">
               <span className="w-24 text-gray-600">이름</span>
-              <span>{user.userName}</span>
+              <span>{userInfo.userName}</span>
             </div>
             <div className="flex items-center">
               <span className="w-24 text-gray-600">전화번호</span>
-              <span>{user.phone}</span>
+              <span>{userInfo.phone}</span>
             </div>
           </div>
 

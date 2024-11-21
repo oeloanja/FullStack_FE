@@ -2,26 +2,78 @@
 
 import { useState } from "react"
 import { Button } from "@/components/button"
+import { useToken } from "@/contexts/TokenContext"
+import { useUser } from "@/contexts/UserContext"
+import api from "@/utils/api"
+import { Toast } from "@/components/toast"
+import { useRouter } from 'next/navigation'
 
 export default function ChangePassword() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [isEmailVerified, setIsEmailVerified] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null)
+  const { token } = useToken()
+  const { userBorrowId } = useUser()
+  const router = useRouter()
 
-  const handleEmailVerification = () => {
-    // Here you would typically verify the email
-    setIsEmailVerified(true)
-  }
+  const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (password !== confirmPassword) {
-      alert("비밀번호가 일치하지 않습니다.")
+    setIsLoading(true)
+    setToast(null)
+
+    if (!token || !userBorrowId) {
+      setToast({ message: "인증 정보가 없습니다. 다시 로그인해주세요.", type: "error" })
+      setIsLoading(false)
       return
     }
-    // Handle password change logic here
-    console.log("Password change submitted")
+
+    if (newPassword !== newPasswordConfirm) {
+      setToast({ message: "새 비밀번호가 일치하지 않습니다.", type: "error" })
+      setIsLoading(false)
+      return
+    }
+
+    if (!passwordPattern.test(newPassword)) {
+      setToast({ message: "비밀번호는 8자 이상, 영문, 숫자, 특수문자를 포함해야 합니다.", type: "error" })
+      setIsLoading(false)
+      return
+    }
+
+    try {
+      const response = await api.put(
+        "/api/v1/user_service/users/borrow/password",
+        { currentPassword, newPassword, newPasswordConfirm },
+        {
+          params: { userId: userBorrowId },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      )
+
+      if (response.status === 200) {
+        setToast({ message: "비밀번호가 성공적으로 변경되었습니다.", type: "success" })
+        setCurrentPassword("")
+        setNewPassword("")
+        setNewPasswordConfirm("")
+        
+        setTimeout(() => {
+          router.push('/borrow-my-page')
+        }, 2000)
+      } else {
+        throw new Error('비밀번호 변경에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error("비밀번호 변경 오류:", error)
+      setToast({ message: "비밀번호 변경에 실패했습니다. 다시 시도해주세요.", type: "error" })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -29,61 +81,61 @@ export default function ChangePassword() {
       <h1 className="text-5xl font-bold text-center mb-8">비밀번호 변경</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Email Input */}
         <div className="space-y-2">
-          <label className="text-sm text-gray-600">이메일</label>
-          <div className="flex gap-2">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="이메일을 입력해 주세요"
-              className="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm"
-              disabled={isEmailVerified}
-            />
-            <Button
-              type="button"
-              onClick={handleEmailVerification}
-              disabled={isEmailVerified}
-              className="bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white px-6"
-            >
-              이메일 확인
-            </Button>
-          </div>
-        </div>
-
-        {/* Password Input */}
-        <div className="space-y-2">
-          <label className="text-sm text-gray-600">비밀번호</label>
+          <label htmlFor="current-password" className="text-sm text-gray-600">현재 비밀번호</label>
           <input
+            id="current-password"
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="비밀번호를 입력해주세요"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            placeholder="현재 비밀번호를 입력해주세요"
             className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm"
+            required
           />
         </div>
 
-        {/* Confirm Password Input */}
         <div className="space-y-2">
-          <label className="text-sm text-gray-600">비밀번호 확인</label>
+          <label htmlFor="new-password" className="text-sm text-gray-600">새 비밀번호</label>
           <input
+            id="new-password"
             type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="비밀번호를 다시 입력해주세요"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="새 비밀번호를 입력해주세요"
             className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm"
+            required
           />
         </div>
 
-        {/* Submit Button */}
+        <div className="space-y-2">
+          <label htmlFor="new-password-confirm" className="text-sm text-gray-600">새 비밀번호 확인</label>
+          <input
+            id="new-password-confirm"
+            type="password"
+            value={newPasswordConfirm}
+            onChange={(e) => setNewPasswordConfirm(e.target.value)}
+            placeholder="새 비밀번호를 다시 입력해주세요"
+            className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm"
+            required
+          />
+        </div>
+
         <Button 
           type="submit"
-          className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white h-12 mt-4"
+          className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white h-12"
+          disabled={isLoading}
         >
-          비밀번호 변경 완료
+          {isLoading ? "처리 중..." : "비밀번호 변경 완료"}
         </Button>
       </form>
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   )
 }

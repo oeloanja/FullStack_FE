@@ -1,42 +1,35 @@
 "use client"
 
-import { createContext, useState, useEffect, ReactNode } from "react"
+import React, { createContext, useContext, useState, useEffect } from 'react'
 
 interface TokenContextType {
   token: string | null
   setToken: (token: string | null) => void
-  clearToken: () => void
 }
 
-export const TokenContext = createContext<TokenContextType | undefined>(undefined)
+const TokenContext = createContext<TokenContextType | undefined>(undefined)
 
-export const TokenProvider = ({ children }: { children: ReactNode }) => {
-  const [token, setTokenState] = useState<string | null>(null)
+export const TokenProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [token, setToken] = useState<string | null>(null)
 
   useEffect(() => {
     const storedToken = sessionStorage.getItem('token')
     if (storedToken) {
-      setTokenState(storedToken)
+      setToken(storedToken)
     }
   }, [])
 
-  const setToken = (newToken: string | null) => {
-    setTokenState(newToken)
-    if (newToken) {
-      sessionStorage.setItem('token', newToken)
-    } else {
-      sessionStorage.removeItem('token')
-    }
-  }
-
-  const clearToken = () => {
-    setTokenState(null)
-    sessionStorage.removeItem('token')
-  }
-
   return (
-    <TokenContext.Provider value={{ token, setToken, clearToken }}>
+    <TokenContext.Provider value={{ token, setToken }}>
       {children}
     </TokenContext.Provider>
   )
+}
+
+export const useToken = () => {
+  const context = useContext(TokenContext)
+  if (context === undefined) {
+    throw new Error('useToken must be used within a TokenProvider')
+  }
+  return context
 }

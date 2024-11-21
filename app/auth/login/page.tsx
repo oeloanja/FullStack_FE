@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import { Toast } from "@/components/toast"
 import { useAuth } from "@/contexts/AuthContext"
 import { useUser } from "@/contexts/UserContext"
-import { useToken } from '@/hooks/useToken'
+import { useToken } from '@/contexts/TokenContext'
 import api from '@/utils/api'
 
 interface LoginResponse {
@@ -69,7 +69,7 @@ export default function LoginPage() {
       const response = await loginUser(formData.email, formData.password, userType)
 
       if (response.accessToken) {
-        setToken(response.accessToken)  // Ensure accessToken is set
+        setToken(response.accessToken) 
       } else {
         throw new Error('토큰을 가져오지 못했습니다.')
       }

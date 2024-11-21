@@ -5,6 +5,8 @@ import { ChevronDown } from 'lucide-react'
 import { Button } from "@/components/button"
 import { useUser } from "@/contexts/UserContext"
 import api from '@/utils/api'
+import { useToken } from '@/contexts/TokenContext'
+import { useRouter } from 'next/navigation'
 
 interface LoanResponseDto {
   loanId: number
@@ -55,6 +57,8 @@ export default function LoanHistoryPage() {
   const [loanHistory, setLoanHistory] = useState<LoanResponseDto[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { token } = useToken()
+  const router = useRouter()
 
   useEffect(() => {
     const fetchLoanHistory = async () => {
@@ -65,7 +69,8 @@ export default function LoanHistoryPage() {
         }
         const response = await api.get(`/api/v1/loans/history/${userBorrowId}`, {
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           }
         })
         console.log('API 응답 데이터:', response.data)
@@ -81,7 +86,7 @@ export default function LoanHistoryPage() {
     if (userBorrowId) {
       fetchLoanHistory()
     }
-  }, [userBorrowId])
+  }, [userBorrowId, token])
 
   const formatLoanPeriod = (createdAt: string, term: number) => {
     const date = new Date(createdAt)
