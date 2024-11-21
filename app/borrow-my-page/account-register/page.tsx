@@ -4,7 +4,6 @@ import { useState } from "react"
 import { Button } from "@/components/button"
 import { ChevronDown } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from "@/contexts/AuthContext"
 import { useUser } from "@/contexts/UserContext"
 import api from '@/utils/api'
 import { getToken } from '@/utils/auth'
@@ -20,7 +19,6 @@ export default function AccountRegistration() {
   const [error, setError] = useState<string | null>(null)
 
   const router = useRouter()
-  const { user } = useAuth()
   const { userBorrowId } = useUser()
 
   const handleSubmit = async (e: React.FormEvent) => {

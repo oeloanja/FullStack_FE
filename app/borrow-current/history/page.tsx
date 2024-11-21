@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { Button } from "@/components/button"
 import { useUser } from "@/contexts/UserContext"
-import { fetchWithAuth } from '@/utils/api'
+import api from '@/utils/api'
 
-interface LoanHistory {
+interface LoanResponseDto {
   loanId: number
   userBorrowId: number
   groupId: number | null
@@ -15,17 +15,35 @@ interface LoanHistory {
   intRate: number
   issueDate: string | null
   createdAt: string
-  statusType: string
+  statusType: LoanStatusType
 }
 
-const getLoanStatusColor = (statusType: string): string => {
+enum LoanStatusType {
+  WAITING = 'WAITING',
+  EXECUTING = 'EXECUTING',
+  COMPLETED = 'COMPLETED',
+  OVERDUE = 'OVERDUE',
+  REJECTED = 'REJECTED',
+  CANCELED = 'CANCELED'
+}
+
+const loanStatusDescriptions: { [key in LoanStatusType]: string } = {
+  [LoanStatusType.WAITING]: '대출 희망',
+  [LoanStatusType.EXECUTING]: '실행 중',
+  [LoanStatusType.COMPLETED]: '상환 완료',
+  [LoanStatusType.OVERDUE]: '연체',
+  [LoanStatusType.REJECTED]: '거절',
+  [LoanStatusType.CANCELED]: '취소됨'
+}
+
+const getLoanStatusColor = (statusType: LoanStatusType): string => {
   switch (statusType) {
-    case 'WAITING': return 'text-blue-500'
-    case 'EXECUTING': return 'text-[#23E2C2]'
-    case 'COMPLETED': return 'text-green-500'
-    case 'OVERDUE': return 'text-red-500'
-    case 'REJECTED': return 'text-gray-500'
-    case 'CANCELED': return 'text-gray-400'
+    case LoanStatusType.WAITING: return 'text-blue-500'
+    case LoanStatusType.EXECUTING: return 'text-[#23E2C2]'
+    case LoanStatusType.COMPLETED: return 'text-green-500'
+    case LoanStatusType.OVERDUE: return 'text-red-500'
+    case LoanStatusType.REJECTED: return 'text-gray-500'
+    case LoanStatusType.CANCELED: return 'text-gray-400'
     default: return 'text-gray-400'
   }
 }
@@ -33,8 +51,8 @@ const getLoanStatusColor = (statusType: string): string => {
 export default function LoanHistoryPage() {
   const { userBorrowId } = useUser()
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-  const [selectedFilter, setSelectedFilter] = useState('전체보기')
-  const [loanHistory, setLoanHistory] = useState<LoanHistory[]>([])
+  const [selectedFilter, setSelectedFilter] = useState<string>('전체보기')
+  const [loanHistory, setLoanHistory] = useState<LoanResponseDto[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -45,9 +63,13 @@ export default function LoanHistoryPage() {
         if (!userBorrowId) {
           throw new Error('사용자 ID를 찾을 수 없습니다')
         }
-        const data = await fetchWithAuth(`/loan/v1/loans/history/${userBorrowId}`)
-        console.log('API 응답 데이터:', data)
-        setLoanHistory(data)
+        const response = await api.get(`/api/v1/loans/history/${userBorrowId}`, {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+        console.log('API 응답 데이터:', response.data)
+        setLoanHistory(response.data)
       } catch (err) {
         console.error('대출 이력 조회 중 오류 발생:', err)
         setError(err instanceof Error ? err.message : '오류가 발생했습니다')
@@ -70,6 +92,13 @@ export default function LoanHistoryPage() {
     }).replace(/\. /g, '.').slice(0, -1)
     return `${formattedDate}, ${term}개월`
   }
+
+  const filterLoanHistory = (history: LoanResponseDto[], filter: string) => {
+    if (filter === '전체보기') return history
+    return history.filter(loan => loanStatusDescriptions[loan.statusType] === filter)
+  }
+
+  const filteredLoanHistory = filterLoanHistory(loanHistory, selectedFilter)
 
   if (isLoading) return <div className="p-4">로딩 중...</div>
   if (error) return <div className="p-4 text-red-500">오류: {error}</div>
@@ -100,16 +129,25 @@ export default function LoanHistoryPage() {
             </Button>
             {isDropdownOpen && (
               <div className="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg z-10 border border-gray-200">
-                {['전체보기', '대출 중', '대출 취소', '상환 완료', '대출 희망'].map((option) => (
+                <Button
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-none"
+                  onClick={() => {
+                    setSelectedFilter('전체보기')
+                    setIsDropdownOpen(false)
+                  }}
+                >
+                  전체보기
+                </Button>
+                {Object.values(loanStatusDescriptions).map((description) => (
                   <Button
-                    key={option}
+                    key={description}
                     className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-none"
                     onClick={() => {
-                      setSelectedFilter(option)
+                      setSelectedFilter(description)
                       setIsDropdownOpen(false)
                     }}
                   >
-                    {option}
+                    {description}
                   </Button>
                 ))}
               </div>
@@ -128,14 +166,14 @@ export default function LoanHistoryPage() {
               </tr>
             </thead>
             <tbody>
-              {loanHistory.map((loan) => (
+              {filteredLoanHistory.map((loan) => (
                 <tr key={loan.loanId} className="border-b border-gray-100 last:border-0">
                   <td className="py-4 px-4">{formatLoanPeriod(loan.createdAt, loan.term)}</td>
                   <td className="py-4 px-4">{loan.loanAmount.toLocaleString()}원</td>
                   <td className="py-4 px-4">{loan.intRate.toFixed(2)}%</td>
                   <td className="py-4 px-4 text-right">
                     <span className={getLoanStatusColor(loan.statusType)}>
-                      {loan.statusType}
+                      {loanStatusDescriptions[loan.statusType]}
                     </span>
                   </td>
                 </tr>

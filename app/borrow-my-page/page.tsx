@@ -80,7 +80,7 @@ export default function BorrowerMyPage() {
     }
 
     try {
-      await api.put(`/api/v1/user_service/users/accounts/borrow/${id}/status`, 
+      await api.put(`/api/v1/user_service/accounts/borrow/${id}/status`, 
         { isDeleted: true },
         {
           params: { userId: userBorrowId },

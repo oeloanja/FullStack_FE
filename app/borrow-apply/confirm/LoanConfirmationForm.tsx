@@ -3,14 +3,22 @@
 import { useRef } from "react"
 import { useRouter } from 'next/navigation'
 import api from '@/utils/api'
+import { useUser } from "@/contexts/UserContext"
 
-export function LoanConfirmationForm({ period }: { period: number }) {
+export default function LoanConfirmationForm({ period }: { period: number }) {
   const router = useRouter()
   const loanAmountRef = useRef<HTMLInputElement>(null)
+  const { userBorrowId } = useUser()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const loanAmount = loanAmountRef.current?.value
+
+    if (!userBorrowId) {
+      console.error('사용자 ID를 찾을 수 없습니다.')
+      alert('로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.')
+      return
+    }
 
     if (!loanAmount) {
       console.error('대출 금액이 입력되지 않았습니다.')
@@ -20,13 +28,20 @@ export function LoanConfirmationForm({ period }: { period: number }) {
     const loanAmountInWon = parseFloat(loanAmount) * 10000 // 만원 단위를 원 단위로 변환
 
     const loanRequestData = {
-      userBorrowId: 1,
+      userBorrowId: userBorrowId,
+      AccountBorrowId: parseInt(localStorage.getItem('selectedAccountId') || '0'),
       loanAmount: loanAmountInWon,
       term: period
     }
 
+    if (!loanRequestData.AccountBorrowId) {
+      console.error('선택된 계좌 ID를 찾을 수 없습니다.')
+      alert('선택된 계좌 정보를 찾을 수 없습니다. 계좌를 다시 선택해 주세요.')
+      return
+    }
+
     try {
-      const response = await api.post('/loan/v1/loans/register/success', loanRequestData)
+      const response = await api.post('/v1/loans/register/success', loanRequestData)
 
       if (response.status === 200) {
         const result = response.data

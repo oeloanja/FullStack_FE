@@ -1,5 +1,5 @@
 import { getLoanConditions } from './actions'
-import { LoanConfirmationForm } from './LoanConfirmationForm'
+import  LoanConfirmationForm  from './LoanConfirmationForm'
 
 export default async function Page({ searchParams }: { searchParams: { period: string } }) {
   const period = parseInt(searchParams.period) || 12 // 기본값 12개월

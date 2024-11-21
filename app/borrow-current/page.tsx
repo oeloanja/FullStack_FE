@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from "next/link"
 import { Button } from "@/components/button"
+import api from '@/utils/api';
 
 interface LoanDetail {
   loanId: number;
@@ -22,35 +23,41 @@ export default function CurrentLoanStatus() {
   const [loanDetail, setLoanDetail] = useState<LoanDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const userBorrowId = localStorage.getItem('userBorrowId');
+
 
   useEffect(() => {
     const fetchLoanDetail = async () => {
       setIsLoading(true);
       try {
-        // Assuming we have the loanId stored somewhere (e.g., in localStorage)
-        const loanId = localStorage.getItem('currentLoanId');
-        if (!loanId) {
-          throw new Error('No current loan found');
+        if (!userBorrowId) {
+          throw new Error('User borrow ID is not available');
         }
-        const response = await fetch(`/api/v1/loans/detail/${loanId}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch loan details');
+        const response = await api.get(`/api/v1/loans/history/${userBorrowId}/filter`, {
+          params: { loanStatus: 0 },
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        console.log('API Response:', response);
+        if (response.data && response.data.length > 0) {
+          setLoanDetail(response.data[0]);
+        } else {
+          setLoanDetail(null);
         }
-        const data = await response.json();
-        setLoanDetail(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
+        console.error('Error fetching loan details:', err);
+        setError(err instanceof Error ? err.message : 'An error occurred while fetching loan details');
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchLoanDetail();
-  }, []);
+  }, [userBorrowId]);
 
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
-  if (!loanDetail) return <div>No current loan found.</div>;
 
   return (
     <div className="flex flex-col min-h-screen p-4">
@@ -70,89 +77,97 @@ export default function CurrentLoanStatus() {
         <div className="border shadow-sm bg-white rounded-2xl p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold">대출 현황</h2>
-            <Link href="/borrow-current/repay">
-              <Button className="rounded-[10px] text-white text-sm sm:text-base bg-[#23E2C2]">
-                대출 상환
-              </Button>
-            </Link>
+            {loanDetail && (
+              <Link href="/borrow-current/repay">
+                <Button className="rounded-[10px] text-white text-sm sm:text-base bg-[#23E2C2]">
+                  대출 상환
+                </Button>
+              </Link>
+            )}
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* Basic Info */}
-            <div className="border shadow-sm rounded-2xl p-4">
-              <h3 className="font-bold text-gray-600 pb-2">기본 정보</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">대출금</span>
-                  <span className="font-medium">{loanDetail.loanAmount.toLocaleString()}원</span>
+          {loanDetail ? (
+            <div className="grid md:grid-cols-2 gap-8">
+              {/* Basic Info */}
+              <div className="border shadow-sm rounded-2xl p-4">
+                <h3 className="font-bold text-gray-600 pb-2">기본 정보</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">대출금</span>
+                    <span className="font-medium">{loanDetail.loanAmount.toLocaleString()}원</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">대출상태</span>
+                    <span className="text-[#23E2C2] font-medium">대출 진행 중</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">대출기간</span>
+                    <span className="font-medium">{loanDetail.term}개월</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">대출상태</span>
-                  <span className="text-[#23E2C2] font-medium">{loanDetail.status}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">대출기간</span>
-                  <span className="font-medium">{loanDetail.term}개월</span>
+              </div>
+
+              {/* Status Info */}
+              <div className="border shadow-sm rounded-2xl p-4">
+                <h3 className="font-bold text-gray-600 pb-2">상환 정보</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">다음 납부일</span>
+                    <span className="font-medium">{new Date(loanDetail.nextPaymentDate).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">전체 만기일</span>
+                    <span className="font-medium">{new Date(loanDetail.endDate).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">출금계좌</span>
+                    <span className="font-medium">{loanDetail.accountBank} | {loanDetail.accountNumber}</span>
+                  </div>
                 </div>
               </div>
             </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              현재 진행중인 대출이 없습니다!
+            </div>
+          )}
+        </div>
 
-            {/* Status Info */}
-            <div className="border shadow-sm rounded-2xl p-4">
-              <h3 className="font-bold text-gray-600 pb-2">상환 정보</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">다음 납부일</span>
-                  <span className="font-medium">{new Date(loanDetail.nextPaymentDate).toLocaleDateString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">전체 만기일</span>
-                  <span className="font-medium">{new Date(loanDetail.endDate).toLocaleDateString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">출금계좌</span>
-                  <span className="font-medium">{loanDetail.accountBank} | {loanDetail.accountNumber}</span>
-                </div>
-              </div>
+        {loanDetail && (
+          <div className="border shadow-sm rounded-2xl bg-white p-6">
+            <h2 className="text-xl font-bold mb-6">상환 예정일</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-gray-500 text-sm border-b-2">
+                    <th className="text-left pb-4">회차</th>
+                    <th className="text-left pb-4">상환일</th>
+                    <th className="text-right pb-4">상환금액</th>
+                    <th className="text-right pb-4">상환상태</th>
+                  </tr>
+                </thead>
+                <tbody className="text-sm border-b-2">
+                  <tr className="border-b-2">
+                    <td className="py-4">1회차</td>
+                    <td>{new Date(loanDetail.startDate).toLocaleDateString()}</td>
+                    <td className="text-right">{(loanDetail.loanAmount / loanDetail.term).toLocaleString()}원</td>
+                    <td className="text-right">
+                      <span className="text-[#23E2C2]">상환완료</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="py-4">2회차</td>
+                    <td>{new Date(loanDetail.nextPaymentDate).toLocaleDateString()}</td>
+                    <td className="text-right">{(loanDetail.loanAmount / loanDetail.term).toLocaleString()}원</td>
+                    <td className="text-right">
+                      <span className="text-red-500">상환대기</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
-        </div>
-
-        {/* Repayment Schedule Card */}
-        <div className="border shadow-sm rounded-2xl bg-white p-6">
-          <h2 className="text-xl font-bold mb-6">상환 예정일</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="text-gray-500 text-sm border-b-2">
-                  <th className="text-left pb-4">회차</th>
-                  <th className="text-left pb-4">상환일</th>
-                  <th className="text-right pb-4">상환금액</th>
-                  <th className="text-right pb-4">상환상태</th>
-                </tr>
-              </thead>
-              <tbody className="text-sm border-b-2">
-                {/* This part would ideally be populated with actual repayment schedule data */}
-                <tr className="border-b-2">
-                  <td className="py-4">1회차</td>
-                  <td>{new Date(loanDetail.startDate).toLocaleDateString()}</td>
-                  <td className="text-right">{(loanDetail.loanAmount / loanDetail.term).toLocaleString()}원</td>
-                  <td className="text-right">
-                    <span className="text-[#23E2C2]">상환완료</span>
-                  </td>
-                </tr>
-                <tr>
-                  <td className="py-4">2회차</td>
-                  <td>{new Date(loanDetail.nextPaymentDate).toLocaleDateString()}</td>
-                  <td className="text-right">{(loanDetail.loanAmount / loanDetail.term).toLocaleString()}원</td>
-                  <td className="text-right">
-                    <span className="text-red-500">상환대기</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        )}
       </main>
     </div>
   )
