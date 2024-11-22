@@ -49,29 +49,31 @@ export function PasswordVerification({ onVerificationSuccess }: PasswordVerifica
   }
 
   return (
-    <div className="max-w-md mx-auto mt-8 pt-10 border shadow-sm bg-white rounded-2xl p-6">
-      <h2 className="text-2xl font-bold mb-4">비밀번호 확인</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <input
-            id="password"
-            type="password"
-            placeholder="비밀번호를 입력해주세요"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="mt-3 block w-full border-gray-300 focus:border-[#23E2C2] focus:ring focus:ring-[#23E2C2] focus:ring-opacity-50 border shadow-sm bg-white rounded-2xl p-6"
-            required
-          />
-        </div>
-        {error && <p className="text-red-500">{error}</p>}
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white"
-        >
-          {isLoading ? '확인 중...' : '확인'}
-        </Button>
-      </form>
+    <div className="pt-32">
+      <div className="max-w-md mx-auto mt-8 pt-10 border shadow-sm bg-white rounded-2xl p-6">
+        <h2 className="text-2xl font-bold mb-4 text-center">비밀번호 확인</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <input
+              id="password"
+              type="password"
+              placeholder="비밀번호를 입력해주세요"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="mt-3 block w-full border-gray-300 focus:border-[#23E2C2] focus:ring focus:ring-[#23E2C2] focus:ring-opacity-50 border shadow-sm bg-white rounded-2xl p-6"
+              required
+            />
+          </div>
+          {error && <p className="text-red-500">{error}</p>}
+          <Button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white"
+          >
+            {isLoading ? '확인 중...' : '확인'}
+          </Button>
+        </form>
+      </div>
     </div>
   )
 }
