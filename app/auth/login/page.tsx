@@ -17,6 +17,7 @@ interface LoginResponse {
     userName: string
     phone: string
     userBorrowId?: number
+    userInvestId?: number
   }
   accessToken: string
 }
@@ -31,7 +32,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const { login } = useAuth()
-  const { setUserType, setUserBorrowId } = useUser()
+  const { setUserType, setUserBorrowId, setUserInvestId } = useUser()
   const { setToken } = useToken()
 
   async function loginUser(email: string, password: string, userType: 'borrow' | 'invest'): Promise<LoginResponse> {
@@ -80,9 +81,15 @@ export default function LoginPage() {
         setUserBorrowId(null)
       }
 
+      if (userType === 'invest' && response.user.userInvestId) {
+        setUserInvestId(response.user.userInvestId)
+      } else {
+        setUserInvestId(null)
+      }
+
       login(response.accessToken, userType, response.user)
       setUserType(userType)
-      
+
       setToast({ message: '로그인에 성공했습니다.', type: 'success' })
       router.push('/')
     } catch (error) {

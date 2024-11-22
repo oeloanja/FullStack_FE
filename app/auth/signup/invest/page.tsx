@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/button"
 import { useRouter } from 'next/navigation'
 import { Toast } from "@/components/toast"
+import api from '@/utils/api'
 
 interface SignupResponse {
   success: boolean;
@@ -12,30 +13,32 @@ interface SignupResponse {
 
 async function registerUser(userData: any): Promise<SignupResponse> {
   try {
-    const response = await fetch('http://localhost:8085/api/users/invest/signup', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify({
+    const response = await api.post('/api/v1/user_service/users/invest/signup',
+      ({
         email: userData.email,
         password: userData.password,
         passwordConfirm: userData.passwordConfirm,
         userName: userData.userName,
         phone: userData.phone
       }),
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        }
     });
-
-    if (!response.ok) {
-      const errorData = await response.text();
+    console.log(response)
+    if (response.status!==200) {
+      const errorData = response.data;
       throw new Error(errorData || '회원가입 처리 중 오류가 발생했습니다.');
     }
 
     return { success: true, message: '회원가입이 완료되었습니다.' };
   } catch (error) {
+    console.log(error)
     if (error instanceof Error) {
-      return { success: false, message: error.message };
+      return { success: false, message: error.response.data.message };
     }
     return { success: false, message: '알 수 없는 오류가 발생했습니다.' };
   }

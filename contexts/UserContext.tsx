@@ -8,8 +8,10 @@ type UserType = 'borrow' | 'invest' | null
 interface UserContextType {
   userType: UserType
   userBorrowId: number | null
+  userInvestId: number | null
   setUserType: (type: UserType) => void
   setUserBorrowId: (id: number | null) => void
+  setUserInvestId: (id: number | null) => void
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined)
@@ -17,11 +19,13 @@ const UserContext = createContext<UserContextType | undefined>(undefined)
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [userType, setUserType] = useState<UserType>(null)
   const [userBorrowId, setUserBorrowId] = useState<number | null>(null)
+  const [userInvestId, setUserInvestId] = useState<number | null>(null)
   const { user } = useAuth()
 
   useEffect(() => {
     const storedUserType = localStorage.getItem('userType') as UserType
     const storedUserBorrowId = localStorage.getItem('userBorrowId')
+    const storedUserInvestId = localStorage.getItem('userInvestId')
     
     if (storedUserType) {
       setUserType(storedUserType)
@@ -29,14 +33,19 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (storedUserBorrowId) {
       setUserBorrowId(Number(storedUserBorrowId))
     }
+    if (storedUserInvestId) {
+      setUserInvestId(Number(storedUserInvestId))
+    }
   }, [])
 
   useEffect(() => {
     if (!user) {
       setUserType(null)
       setUserBorrowId(null)
+      setUserInvestId(null)
       localStorage.removeItem('userType')
       localStorage.removeItem('userBorrowId')
+      localStorage.removeItem('userInvestId')
     }
   }, [user])
 
@@ -60,13 +69,25 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
+  const updateUserInvestId = (id: number | null) => {
+    console.log('사용자 투자 ID 업데이트:', id)
+    setUserInvestId(id)
+    if (id !== null) {
+      localStorage.setItem('userInvestId', id.toString())
+    } else {
+      localStorage.removeItem('userInvestId')
+    }
+  }
+
   return (
     <UserContext.Provider 
       value={{ 
         userType, 
         userBorrowId,
+        userInvestId,
         setUserType: updateUserType,
-        setUserBorrowId: updateUserBorrowId
+        setUserBorrowId: updateUserBorrowId,
+        setUserInvestId: updateUserInvestId
       }}
     >
       {children}

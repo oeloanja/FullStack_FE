@@ -3,36 +3,75 @@
 import { useState } from "react"
 import { Button } from "@/components/button"
 import { ChevronDown } from 'lucide-react'
-import axios from 'axios'
 import { useRouter } from 'next/navigation'
+import { useUser } from "@/contexts/UserContext"
+import api from '@/utils/api'
+import { getToken } from '@/utils/auth'
+
+const banks = ["토스뱅크", "신한은행", "국민은행", "우리은행", "하나은행", "농협은행"]
 
 export default function AccountRegistration() {
-  const router = useRouter()
   const [selectedBank, setSelectedBank] = useState("")
   const [accountNumber, setAccountNumber] = useState("")
   const [accountHolder, setAccountHolder] = useState("")
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const banks = ["신한은행", "국민은행", "우리은행", "하나은행"]
+  const router = useRouter()
+  const { userInvestId } = useUser()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsLoading(true)
+    setError(null)
+
+    if (!userInvestId) {
+      setError("인증 정보를 찾을 수 없습니다. 다시 로그인해 주세요.")
+      setIsLoading(false)
+      return
+    }
+
+    if (!selectedBank) {
+      setError("은행을 선택해 주세요.")
+      setIsLoading(false)
+      return
+    }
+
+    const token = getToken()
+    if (!token) {
+      setError("인증 토큰이 없습니다. 다시 로그인해 주세요.")
+      setIsLoading(false)
+      return
+    }
+
     try {
-      const userId = 1;
-      await axios.post(`http://localhost:8085/api/accounts/invest?userId=${userId}`, {
-        bankName: selectedBank,
-        accountNumber,
-        accountHolder
-      });
+      await api.post(`/api/v1/user_service/accounts/invest`, 
+        {
+          bankName: selectedBank,
+          accountNumber,
+          accountHolder
+        },
+        {
+          params: { userId: userInvestId },
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      )
       router.push('/invest-my-page')
     } catch (error) {
-      console.error("Error registering account:", error);
+      console.error("계좌 등록 오류:", error)
+      setError("계좌 등록에 실패했습니다. 다시 시도해 주세요.")
+    } finally {
+      setIsLoading(false)
     }
   }
 
   return (
     <div className="max-w-md mx-auto p-6">
-      <h1 className="text-5xl font-bold text-center mb-8">투자자 계좌 등록</h1>
+      <h1 className="text-5xl font-bold text-center mb-8">계좌 등록</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
@@ -98,11 +137,14 @@ export default function AccountRegistration() {
           />
         </div>
 
+        {error && <p className="text-red-500">{error}</p>}
+
         <Button 
           type="submit"
+          disabled={isLoading}
           className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white h-12"
         >
-          계좌 등록 완료
+          {isLoading ? '처리 중...' : '계좌 등록 완료'}
         </Button>
       </form>
     </div>
