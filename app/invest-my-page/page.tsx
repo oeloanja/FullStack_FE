@@ -1,15 +1,28 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { PasswordVerification } from "./components/passwordVerification"
 import InvestorMyPage from "./components/invest-my-page"
 
 export default function Page() {
-  const [isPasswordVerified, setIsPasswordVerified] = useState(false)
+  const [verificationToken, setVerificationToken] = useState<string | null>(null)
 
-  if (!isPasswordVerified) {
-    return <PasswordVerification onVerificationSuccess={() => setIsPasswordVerified(true)} />
+  const handleVerificationSuccess = (token: string) => {
+    sessionStorage.setItem('verificationToken', token)
+    setVerificationToken(token)
   }
 
-  return <InvestorMyPage />
+  useEffect(() => {
+    const token = sessionStorage.getItem('verificationToken')
+    if (token) {
+      setVerificationToken(token)
+    }
+  }, [])
+
+  if (!verificationToken) {
+    return <PasswordVerification onVerificationSuccess={handleVerificationSuccess} />
+  }
+
+  return <InvestorMyPage verificationToken={verificationToken} />
 }
+

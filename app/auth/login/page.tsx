@@ -168,10 +168,10 @@ export default function LoginPage() {
             </Button>
 
             <div className="text-center">
-              아이디/PW가 기억나지 않으신가요? <Link 
-                href="/forgot-password" 
+              PW가 기억나지 않으신가요? <Link 
+                href="forgot-password" 
                 className="text-sm text-[#23E2C2]"
-              >ID/PW 찾기
+              >PW 찾기
               </Link>
             </div>
           </form>

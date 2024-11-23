@@ -26,7 +26,7 @@ type UserInfo = {
   phone: string
 }
 
-export default function BorrowerMyPage() {
+export default function BorrowerMyPage({ verificationToken }: { verificationToken: string }) {
   const [activeTab, setActiveTab] = useState<'personal' | 'account'>('personal')
   const [accounts, setAccounts] = useState<BankAccount[]>([])
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
@@ -41,18 +41,18 @@ export default function BorrowerMyPage() {
   const refresh = searchParams.get('refresh')
 
   const fetchUserData = useCallback(async () => {
-    if (!userBorrowId || !token) {
-      console.error('사용자 ID 또는 토큰이 없습니다:', { userBorrowId, token })
+    if (!userBorrowId || !verificationToken) {
+      console.error('사용자 ID 또는 검증 토큰이 없습니다:', { userBorrowId, verificationToken })
       setError('사용자 정보를 불러올 수 없습니다. 다시 로그인해주세요.')
       return
     }
 
     try {
-      console.log('사용자 정보 요청 시작:', { userBorrowId, token: token.slice(0, 10) + '...' })
+      console.log('사용자 정보 요청 시작:', { userBorrowId, verificationToken: verificationToken.slice(0, 10) + '...' })
       const response = await api.get(`/api/v1/user_service/users/borrow/mypage`, {
         params: { userId: userBorrowId },
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${verificationToken}`,
           'Content-Type': 'application/json'
         }
       })
@@ -69,7 +69,7 @@ export default function BorrowerMyPage() {
       console.error("사용자 정보 조회 오류:", error)
       setError('사용자 정보를 불러오는데 실패했습니다. 네트워크 연결을 확인하고 다시 시도해주세요.')
     }
-  }, [userBorrowId, token])
+  }, [userBorrowId, verificationToken])
 
   const fetchAccounts = useCallback(async () => {
     if (!userBorrowId || userType !== 'borrow') {

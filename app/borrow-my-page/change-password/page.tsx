@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/button"
-import { useToken } from "@/contexts/TokenContext"
 import { useUser } from "@/contexts/UserContext"
 import api from "@/utils/api"
 import { Toast } from "@/components/toast"
 import { useRouter } from 'next/navigation'
+import { PasswordVerification } from "../components/passwordVerification"
 
 export default function ChangePassword() {
   const [currentPassword, setCurrentPassword] = useState("")
@@ -14,18 +14,30 @@ export default function ChangePassword() {
   const [newPasswordConfirm, setNewPasswordConfirm] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null)
-  const { token } = useToken()
+  const [verificationToken, setVerificationToken] = useState<string | null>(null)
   const { userBorrowId } = useUser()
   const router = useRouter()
 
   const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/
+
+  useEffect(() => {
+    const token = sessionStorage.getItem('verificationToken')
+    if (token) {
+      setVerificationToken(token)
+    }
+  }, [])
+
+  const handleVerificationSuccess = (token: string) => {
+    sessionStorage.setItem('verificationToken', token)
+    setVerificationToken(token)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setToast(null)
 
-    if (!token || !userBorrowId) {
+    if (!verificationToken || !userBorrowId) {
       setToast({ message: "인증 정보가 없습니다. 다시 로그인해주세요.", type: "error" })
       setIsLoading(false)
       return
@@ -51,7 +63,7 @@ export default function ChangePassword() {
           params: { userId: userBorrowId },
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${verificationToken}`
           }
         }
       )
@@ -61,6 +73,7 @@ export default function ChangePassword() {
         setCurrentPassword("")
         setNewPassword("")
         setNewPasswordConfirm("")
+        sessionStorage.removeItem('verificationToken')
         
         setTimeout(() => {
           router.push('/borrow-my-page')
@@ -74,6 +87,10 @@ export default function ChangePassword() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (!verificationToken) {
+    return <PasswordVerification onVerificationSuccess={handleVerificationSuccess} />
   }
 
   return (
@@ -139,3 +156,4 @@ export default function ChangePassword() {
     </div>
   )
 }
+

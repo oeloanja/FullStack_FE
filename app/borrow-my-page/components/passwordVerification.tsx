@@ -2,41 +2,47 @@
 
 import { useState } from "react"
 import { Button } from "@/components/button"
-import { useAuth } from "@/contexts/AuthContext"
 import { useUser } from "@/contexts/UserContext"
 import { useToken } from "@/contexts/TokenContext"
 import api from '@/utils/api'
 
 interface PasswordVerificationProps {
-  onVerificationSuccess: () => void
+  onVerificationSuccess: (verificationToken: string) => void
 }
 
 export function PasswordVerification({ onVerificationSuccess }: PasswordVerificationProps) {
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const { userType } = useUser()
+  const { userBorrowId } = useUser()
   const { token } = useToken()
-  const { user } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
 
+    if (!userBorrowId) {
+      setError("사용자 ID가 없습니다. 다시 로그인해주세요.");
+      setIsLoading(false);
+      return;
+    }
+
+    console.log('Sending request with userId:', userBorrowId);
+
     try {
-      const response = await api.post(`/api/v1/user_service/users/${userType}/login`, {
-        email: user?.email,
+      const response = await api.post(`/api/v1/user_service/users/borrow/verify-password`, {
         password: password
       }, {
+        params: { userId: userBorrowId }, // Updated to use userBorrowId
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         }
       })
 
-      if (response.status === 200) {
-        onVerificationSuccess()
+      if (response.status === 200 && response.data.verificationToken) {
+        onVerificationSuccess(response.data.verificationToken)
       } else {
         setError("비밀번호가 올바르지 않습니다.")
       }
@@ -77,3 +83,4 @@ export function PasswordVerification({ onVerificationSuccess }: PasswordVerifica
     </div>
   )
 }
+

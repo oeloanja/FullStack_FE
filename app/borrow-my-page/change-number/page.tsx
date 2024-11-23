@@ -1,27 +1,39 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/button"
-import { useToken } from "@/contexts/TokenContext"
 import { useUser } from "@/contexts/UserContext"
 import api from "@/utils/api"
 import { Toast } from "@/components/toast"
 import { useRouter } from 'next/navigation'
+import { PasswordVerification } from "../components/passwordVerification"
 
 export default function ChangePhoneNumber() {
   const [phoneNumber, setPhoneNumber] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null)
-  const { token } = useToken()
+  const [verificationToken, setVerificationToken] = useState<string | null>(null)
   const { userBorrowId } = useUser()
   const router = useRouter()
+
+  useEffect(() => {
+    const token = sessionStorage.getItem('verificationToken')
+    if (token) {
+      setVerificationToken(token)
+    }
+  }, [])
+
+  const handleVerificationSuccess = (token: string) => {
+    sessionStorage.setItem('verificationToken', token)
+    setVerificationToken(token)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setToast(null)
 
-    if (!token || !userBorrowId) {
+    if (!verificationToken || !userBorrowId) {
       setToast({ message: "인증 정보가 없습니다. 다시 로그인해주세요.", type: "error" })
       setIsLoading(false)
       return
@@ -35,7 +47,7 @@ export default function ChangePhoneNumber() {
           params: { userId: userBorrowId },
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${verificationToken}`
           }
         }
       )
@@ -43,8 +55,8 @@ export default function ChangePhoneNumber() {
       if (response.status === 200) {
         setToast({ message: "전화번호가 성공적으로 변경되었습니다.", type: "success" })
         setPhoneNumber("")
+        sessionStorage.removeItem('verificationToken')
         
-        // 즉시 리다이렉션하지 않고 사용자에게 성공 메시지를 보여줍니다.
         setTimeout(() => {
           router.push('/borrow-my-page')
         }, 2000)
@@ -59,13 +71,17 @@ export default function ChangePhoneNumber() {
     }
   }
 
+  if (!verificationToken) {
+    return <PasswordVerification onVerificationSuccess={handleVerificationSuccess} />
+  }
+
   return (
     <div className="max-w-md mx-auto p-6">
       <h1 className="text-5xl font-bold text-center mb-8">전화번호 변경</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
-          <label htmlFor="phone-number" className="sr-only">전화번호</label>
+          <label htmlFor="phone-number" className="text-sm text-gray-600">새 전화번호</label>
           <input
             id="phone-number"
             type="tel"
@@ -97,3 +113,4 @@ export default function ChangePhoneNumber() {
     </div>
   )
 }
+

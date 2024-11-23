@@ -26,7 +26,7 @@ type UserInfo = {
   phone: string
 }
 
-export default function InvestorMyPage() {
+export default function InvestMyPage({ verificationToken }: { verificationToken: string }) {
   const [activeTab, setActiveTab] = useState<'personal' | 'account'>('personal')
   const [accounts, setAccounts] = useState<BankAccount[]>([])
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
@@ -41,18 +41,18 @@ export default function InvestorMyPage() {
   const refresh = searchParams.get('refresh')
 
   const fetchUserData = useCallback(async () => {
-    if (!userInvestId || !token) {
-      console.error('사용자 ID 또는 토큰이 없습니다:', { userInvestId, token })
+    if (!userInvestId || !verificationToken) {
+      console.error('사용자 ID 또는 검증 토큰이 없습니다:', { userInvestId, verificationToken })
       setError('사용자 정보를 불러올 수 없습니다. 다시 로그인해주세요.')
       return
     }
 
     try {
-      console.log('사용자 정보 요청 시작:', { userInvestId, token: token.slice(0, 10) + '...' })
+      console.log('사용자 정보 요청 시작:', { userInvestId, verificationToken: verificationToken.slice(0, 10) + '...' })
       const response = await api.get(`/api/v1/user_service/users/invest/mypage`, {
         params: { userId: userInvestId },
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${verificationToken}`,
           'Content-Type': 'application/json'
         }
       })
@@ -69,7 +69,7 @@ export default function InvestorMyPage() {
       console.error("사용자 정보 조회 오류:", error)
       setError('사용자 정보를 불러오는데 실패했습니다. 네트워크 연결을 확인하고 다시 시도해주세요.')
     }
-  }, [userInvestId, token])
+  }, [userInvestId, verificationToken])
 
   const fetchAccounts = useCallback(async () => {
     if (!userInvestId || userType !== 'invest') {
