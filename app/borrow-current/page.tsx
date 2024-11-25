@@ -33,8 +33,8 @@ export default function CurrentLoanStatus() {
         if (!userBorrowId) {
           throw new Error('User borrow ID is not available');
         }
-        const response = await api.get(`/api/v1/loans/history/${userBorrowId}/filter`, {
-          params: { loanStatus: 0 },
+        const response = await api.get(`/api/v1/loan-service/history/${userBorrowId}/filter`, {
+          params: { loanStatus: 1 },
           headers: {
             'Content-Type': 'application/json'
           }

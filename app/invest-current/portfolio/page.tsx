@@ -1,42 +1,100 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from "@/components/button"
 import { ChevronDown } from 'lucide-react'
 import Link from 'next/link'
-
-type Investment = {
-  id: number
-  loanGroup: string
-  amount: number
-  grade: string
-  expectedRate: number
-  actualRate: number
-  period: string
-  status: '투자 중' | '상환 완료' | '투자 대기'
-}
+import { useUser } from "@/contexts/UserContext"
+import api from '@/utils/api'
+import { getToken } from '@/utils/auth'
+import { toast } from 'react-hot-toast'
+import type { Investment, InvestmentPortfolio } from '@/types/portpolio'
 
 export default function PortfolioPage() {
-  const [investments] = useState<Investment[]>([
-    { id: 1, loanGroup: '대출그룹 A', amount: 5000000, grade: 'B', expectedRate: 13, actualRate: 11.5, period: '12개월', status: '투자 중' },
-    { id: 2, loanGroup: '대출그룹 B', amount: 3000000, grade: 'C', expectedRate: 28, actualRate: 6.5, period: '12개월', status: '상환 완료' },
-    { id: 3, loanGroup: '대출그룹 C', amount: 2000000, grade: 'C', expectedRate: 8, actualRate: 26.5, period: '12개월', status: '투자 대기' },
-    { id: 4, loanGroup: '대출그룹 D', amount: 1000000, grade: 'A', expectedRate: 1, actualRate: 17.5, period: '12개월', status: '투자 중' },
-    { id: 5, loanGroup: '대출그룹 E', amount: 10000000, grade: 'B', expectedRate: 118, actualRate: 126.5, period: '12개월', status: '투자 중' },
-    { id: 6, loanGroup: '대출그룹 F', amount: 7000000, grade: 'D', expectedRate: 18, actualRate: 16.5, period: '12개월', status: '투자 중' },
-  ])
-
+  const { userInvestId } = useUser()
+  const [investments, setInvestments] = useState<Investment[]>([])
+  const [portfolio, setPortfolio] = useState<InvestmentPortfolio | null>(null)
   const [selectedFilter, setSelectedFilter] = useState<'전체보기' | '투자 중' | '상환 완료' | '투자 대기'>('전체보기')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
-  const totalInvestment = investments.reduce((sum, inv) => sum + inv.amount, 0)
-  const activeInvestments = investments.filter(inv => inv.status === '투자 중').length
-  const averageRate = investments.reduce((sum, inv) => sum + inv.actualRate, 0) / investments.length
-  const totalReturns = investments.reduce((sum, inv) => sum + (inv.amount * inv.actualRate / 100), 0)
+  const fetchPortfolio = async () => {
+    try {
+      const token = getToken()
+      if (!token || !userInvestId) {
+        toast.error('로그인이 필요합니다.')
+        return
+      }
+
+    const response = await api.get(`/api/v1/invest-service/portfolios/${userInvestId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    if (response.data) {
+      setPortfolio(response.data)
+    } else {
+      throw new Error('포트폴리오 데이터가 없습니다.')
+    }
+  } catch (error) {
+    console.error('포트폴리오 조회 중 오류:', error)
+    if (error.response && error.response.status === 404) {
+      toast.error('포트폴리오가 존재하지 않습니다. 투자를 먼저 진행해주세요.')
+    } else {
+      toast.error('포트폴리오 정보를 불러오는데 실패했습니다.')
+    }
+  }
+}
+
+  const fetchInvestments = async () => {
+    try {
+      const token = getToken()
+      if (!token || !userInvestId) {
+        toast.error('로그인이 필요합니다.')
+        return
+      }
+
+      console.log('Fetching investments for user:', userInvestId) // 디버깅용
+
+      const response = await api.get(`/api/v1/invest-service/investments/user/${userInvestId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (Array.isArray(response.data)) {
+        setInvestments(response.data)
+      } else {
+        console.error('Invalid investments data:', response.data)
+        throw new Error('투자 목록 데이터 형식이 올바르지 않습니다.')
+      }
+    } catch (error) {
+      console.error('투자 목록 조회 중 상세 오류:', error)
+      toast.error('투자 목록을 불러오는데 실패했습니다.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!userInvestId) {
+      console.error('사용자 ID가 없습니다.')
+      toast.error('사용자 정보를 찾을 수 없습니다.')
+      return
+    }
+    
+    fetchPortfolio()
+    fetchInvestments()
+  }, [userInvestId])
 
   const filteredInvestments = selectedFilter === '전체보기' 
     ? investments 
     : investments.filter(inv => inv.status === selectedFilter)
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-screen">Loading...</div>
+  }
 
   return (
     <div className="flex flex-col space-y-6 p-6 min-h-screen">
@@ -46,19 +104,27 @@ export default function PortfolioPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
             <p className="text-sm text-gray-500">총 투자금액</p>
-            <p className="text-xl font-bold">{totalInvestment.toLocaleString()}원</p>
+            <p className="text-xl font-bold">
+              {portfolio?.totalInvestedAmount.toLocaleString()}원
+            </p>
           </div>
           <div>
             <p className="text-sm text-gray-500">진행중인 투자</p>
-            <p className="text-xl font-bold">{activeInvestments}건</p>
+            <p className="text-xl font-bold">
+              {investments.filter(inv => inv.status === '투자 중').length}건
+            </p>
           </div>
           <div>
             <p className="text-sm text-gray-500">평균 수익률</p>
-            <p className="text-xl font-bold text-[#23E2C2]">{averageRate.toFixed(1)}%</p>
+            <p className="text-xl font-bold text-[#23E2C2]">
+              {portfolio?.totalReturnRate.toFixed(1)}%
+            </p>
           </div>
           <div>
             <p className="text-sm text-gray-500">총 수익금</p>
-            <p className="text-xl font-bold text-[#23E2C2]">{totalReturns.toLocaleString()}원</p>
+            <p className="text-xl font-bold text-[#23E2C2]">
+              {portfolio?.totalReturnValue.toLocaleString()}원
+            </p>
           </div>
         </div>
       </div>
@@ -84,7 +150,7 @@ export default function PortfolioPage() {
                     key={option}
                     className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     onClick={() => {
-                      setSelectedFilter(option as '전체보기' | '투자 중' | '상환 완료' | '투자 대기')
+                      setSelectedFilter(option as typeof selectedFilter)
                       setIsDropdownOpen(false)
                     }}
                   >
@@ -112,7 +178,7 @@ export default function PortfolioPage() {
             <tbody>
               {filteredInvestments.map((investment) => (
                 <tr key={investment.id} className="border-b border-gray-100 last:border-0">
-                  <td className="py-4 px-4 text-center">{investment.loanGroup}</td>
+                  <td className="py-4 px-4 text-center">{investment.groupName}</td>
                   <td className="py-4 px-4 text-center">{investment.amount.toLocaleString()}원</td>
                   <td className="py-4 px-4 text-center">{investment.grade}</td>
                   <td className="py-4 px-4 text-center">{investment.expectedRate}%</td>
@@ -146,3 +212,4 @@ export default function PortfolioPage() {
     </div>
   )
 }
+
