@@ -4,15 +4,25 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from "@/components/button"
 import { CheckCircle } from 'lucide-react'
+import { toast } from 'react-hot-toast'
+import api from '@/utils/api'
+import { getToken } from '@/utils/auth'
+import axios from 'axios'
 
 interface LoanData {
   loanAmount: number
   term: number
 }
 
+interface LoanGroupResponseClientDto {
+  groupId: number;
+  isFulled: boolean;
+}
+
 export default function SuccessPageContent() {
   const router = useRouter()
   const [loanData, setLoanData] = useState<LoanData | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     const storedData = localStorage.getItem('loanApplicationData')
@@ -20,7 +30,7 @@ export default function SuccessPageContent() {
       const parsedData = JSON.parse(storedData)
       setLoanData({
         loanAmount: parsedData.loanAmount || 0,
-        term: parseInt(parsedData.period) || 0
+        term: parseInt(parsedData.term) || 0
       })
     }
   }, [])
@@ -33,37 +43,122 @@ export default function SuccessPageContent() {
     const loanId = localStorage.getItem('loanId')
     if (!loanId) {
       console.error('대출 ID가 없습니다.')
+      toast.error('대출 정보를 찾을 수 없습니다.')
       return
     }
 
-    try {
-      const response = await fetch(`/api/v1/loan-service/${loanId}/assign-group`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
+    setIsLoading(true)
 
-      if (response.ok) {
-        const result = await response.json()
-        console.log('그룹 배정 성공:', result)
-        alert('대출 그룹이 성공적으로 배정되었습니다.')
+    try {
+      const token = getToken()
+      if (!token) {
+        throw new Error('인증 토큰이 없습니다.')
+      }
+
+      const response = await api.put<LoanGroupResponseClientDto>(`/api/v1/loan-service/${loanId}/assign-group`, 
+        {
+          loanId: parseInt(loanId)
+        }, 
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      )
+
+      if (response.status === 200 && response.data) {
+        console.log('그룹 배정 성공:', response.data)
+        toast.success(`대출 그룹 ${response.data.groupId}에 성공적으로 배정되었습니다.`)
+        if (response.data.isFulled) {
+          toast.success('해당 그룹이 가득 찼습니다. 곧 대출이 실행될 예정입니다.')
+        }
+        router.push('/') // 홈으로 이동
       } else {
-        console.error('그룹 배정 실패:', await response.text())
-        alert('대출 그룹 배정에 실패했습니다. 다시 시도해 주세요.')
+        throw new Error('그룹 배정에 실패했습니다.')
       }
     } catch (error) {
       console.error('API 호출 중 오류 발생:', error)
-      alert('서버와의 통신 중 오류가 발생했습니다. 나중에 다시 시도해 주세요.')
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          toast.error(`대출 그룹 배정 실패: ${error.response.data.message || '알 수 없는 오류가 발생했습니다.'}`)
+        } else if (error.request) {
+          toast.error('서버로부터 응답이 없습니다. 네트워크 연결을 확인해 주세요.')
+        } else {
+          toast.error('대출 그룹 배정 요청 중 오류가 발생했습니다.')
+        }
+      } else {
+        toast.error('대출 그룹 배정에 실패했습니다. 다시 시도해 주세요.')
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleLoanCancel = async () => {
+    const loanId = localStorage.getItem('loanId')
+    if (!loanId) {
+      console.error('대출 ID가 없습니다.')
+      toast.error('대출 정보를 찾을 수 없습니다.')
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      const token = getToken()
+      if (!token) {
+        throw new Error('인증 토큰이 없습니다.')
+      }
+
+      const response = await api.put('/api/v1/loan-service/status', 
+        {
+          loanId: parseInt(loanId),
+          status: 5
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      )
+
+      if (response.status === 200) {
+        toast.success('대출이 성공적으로 취소되었습니다.')
+        localStorage.removeItem('loanId')
+        localStorage.removeItem('loanApplicationData')
+        router.push('/')
+      } else {
+        throw new Error('대출 취소에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error('대출 취소 중 오류 발생:', error)
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          // 서버가 2xx 범위를 벗어나는 상태 코드로 응답한 경우
+          toast.error(`대출 취소 실패: ${error.response.data.message || '알 수 없는 오류가 발생했습니다.'}`)
+        } else if (error.request) {
+          // 요청이 이루어졌으나 응답을 받지 못한 경우
+          toast.error('서버로부터 응답이 없습니다. 네트워크 연결을 확인해 주세요.')
+        } else {
+          // 요청을 설정하는 중에 문제가 발생한 경우
+          toast.error('대출 취소 요청 중 오류가 발생했습니다.')
+        }
+      } else {
+        toast.error('대출 취소 중 오류가 발생했습니다. 다시 시도해 주세요.')
+      }
+    } finally {
+      setIsLoading(false)
     }
   }
 
   return (
     <div className="border shadow-sm bg-white rounded-2xl p-6 max-w-md w-full text-center">
       <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-6" />
-      <h1 className="text-3xl font-bold text-gray-800 mb-4">대출 신청 완료!</h1>
+      <h1 className="text-3xl font-bold text-gray-800 mb-4">대출 신청 마지막 단계!</h1>
       <p className="text-gray-600 mb-6">
-        귀하의 대출 신청이 성공적으로 접수되었습니다.
+        대출 그룹 신청을 하셔야 대출이 완료됩니다.
       </p>
       {loanData && (
         <div className="bg-gray-100 rounded-lg p-4 mb-6">
@@ -74,25 +169,22 @@ export default function SuccessPageContent() {
       )}
       <div className="space-y-4">
         <Button
-          onClick={() => router.push('/my-page')}
-          className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white"
-        >
-          마이페이지로 이동
-        </Button>
-        <Button
-          onClick={() => router.push('/')}
-          variant="outline"
-          className="w-full border-[#23E2C2] text-[#23E2C2] hover:bg-[#23E2C2]/10"
-        >
-          홈으로 돌아가기
-        </Button>
-        <Button
           onClick={handleAssignGroup}
           className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white"
+          disabled={isLoading}
         >
-          대출그룹 신청하기
+          {isLoading ? '처리 중...' : '대출 그룹 신청하기'}
+        </Button>
+        <Button
+          onClick={handleLoanCancel}
+          variant="outline"
+          className="w-full border-[#23E2C2] text-[#23E2C2] hover:bg-[#23E2C2]/10"
+          disabled={isLoading}
+        >
+          {isLoading ? '처리 중...' : '대출 신청 취소하기'}
         </Button>
       </div>
     </div>
   )
 }
+

@@ -8,11 +8,17 @@ export default function CreditEvaluationContent() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.push('/borrow-apply/confirm')
-    }, 3000)
+      const loanData = localStorage.getItem('loanApplicationData');
+      if (loanData) {
+        const { term } = JSON.parse(loanData);
+        router.push(`/borrow-apply/confirm?period=${term}`);
+      } else {
+        router.push('/borrow-apply/confirm');
+      }
+    }, 5000);
 
-    return () => clearTimeout(timer)
-  }, [router])
+    return () => clearTimeout(timer);
+  }, [router]);
 
   return (
     <div className="flex flex-col items-center justify-center space-y-8 mt-20">
@@ -29,3 +35,4 @@ export default function CreditEvaluationContent() {
     </div>
   )
 }
+

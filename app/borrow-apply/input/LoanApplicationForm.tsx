@@ -76,40 +76,20 @@ export default function LoanApplicationForm() {
       return;
     }
 
+    // 선택된 기간을 월 단위의 숫자로 변환
+    const termInMonths = parseInt(data.selectedPeriod);
+
+    // 대출 신청 데이터를 로컬 스토리지에 저장
     const loanApplicationData = {
       userBorrowId: userBorrowId,
-      AccountBorrowId: selectedAccountId,
+      accountBorrowId: selectedAccountId,
       loanAmount: loanAmount,
-      term: parseInt(data.selectedPeriod),
-      address: `${data.roadAddress} ${data.detailAddress}`,
-      postcode: data.postcode,
-      ...data
+      term: termInMonths
     };
+    localStorage.setItem('loanApplicationData', JSON.stringify(loanApplicationData));
 
-    try {
-      const token = getToken();
-      if (!token) {
-        toast.error('인증 토큰이 없습니다. 다시 로그인해주세요.');
-        return;
-      }
-
-      const response = await api.post('/api/v1/loan-service/apply', loanApplicationData, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.data.success) {
-        localStorage.setItem('loanApplicationData', JSON.stringify(loanApplicationData));
-        router.push(`/borrow-apply/confirm?period=${loanApplicationData.term}`);
-      } else {
-        toast.error('대출 신청에 실패했습니다.');
-      }
-    } catch (error) {
-      console.error('대출 신청 중 오류 발생:', error);
-      toast.error('대출 신청 중 오류가 발생했습니다.');
-    }
+    // 신용 평가 페이지로 이동
+    router.push('/borrow-apply/credit');
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
@@ -173,7 +153,7 @@ export default function LoanApplicationForm() {
   };
 
   const execDaumPostcode = () => {
-    if (!isScriptLoaded) { // Check if script is loaded
+    if (!isScriptLoaded) {
       toast.error('우편번호 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
       return;
     }
@@ -220,7 +200,6 @@ export default function LoanApplicationForm() {
     if (error) {
       toast.error(error)
     }
-    // Added useEffect to manage script loading state
     if (window.daum && window.daum.Postcode) {
       setIsScriptLoaded(true);
     } else {
@@ -398,7 +377,8 @@ export default function LoanApplicationForm() {
               </select>
             )}
           />
-          <p className="text-xs text-gray-500 mt-1">* 상환기간은 원리금 균등상환으로 고정됩니다</p>
+          <p className="text-xs text-gray-500 mt-1
+">* 상환기간은 원리금 균등상환으로 고정됩니다</p>
         </div>
 
         <div>
@@ -473,3 +453,4 @@ export default function LoanApplicationForm() {
     </form>
   )
 }
+

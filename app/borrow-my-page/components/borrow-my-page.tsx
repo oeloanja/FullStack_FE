@@ -49,7 +49,7 @@ export default function BorrowerMyPage({ verificationToken }: { verificationToke
 
     try {
       console.log('사용자 정보 요청 시작:', { userBorrowId, verificationToken: verificationToken.slice(0, 10) + '...' })
-      const response = await api.get(`/api/v1/user_service/users/borrow/mypage`, {
+      const response = await api.get(`/api/v1/user-service/users/borrow/mypage`, {
         params: { userId: userBorrowId },
         headers: {
           'Authorization': `Bearer ${verificationToken}`,
