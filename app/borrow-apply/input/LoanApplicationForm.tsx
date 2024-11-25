@@ -93,7 +93,7 @@ export default function LoanApplicationForm() {
         return;
       }
 
-      const response = await api.post('/api/v1/loans/apply', loanApplicationData, {
+      const response = await api.post('/api/v1/loan-service/apply', loanApplicationData, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -130,7 +130,7 @@ export default function LoanApplicationForm() {
     }
 
     try {
-      const response = await api.get(`/api/v1/user_service/accounts/borrow`, {
+      const response = await api.get(`/api/v1/user-service/accounts/borrow`, {
         params: { userId: userBorrowId },
         headers: {
           'Content-Type': 'application/json',

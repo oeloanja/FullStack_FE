@@ -57,7 +57,7 @@ export default function ChangePassword() {
 
     try {
       const response = await api.put(
-        "/api/v1/user_service/users/borrow/password",
+        "/api/v1/user-service/users/borrow/password",
         { currentPassword, newPassword, newPasswordConfirm },
         {
           params: { userId: userBorrowId },

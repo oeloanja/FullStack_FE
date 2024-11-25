@@ -67,7 +67,7 @@ export default function LoanHistoryPage() {
         if (!userBorrowId) {
           throw new Error('사용자 ID를 찾을 수 없습니다')
         }
-        const response = await api.get(`/api/v1/loans/history/${userBorrowId}`, {
+        const response = await api.get(`/api/v1/loan-service/history/${userBorrowId}`, {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`

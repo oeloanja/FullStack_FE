@@ -46,7 +46,7 @@ export default function AccountRegistration() {
     }
 
     try {
-      await api.post(`/api/v1/user_service/accounts/invest`, 
+      await api.post(`/api/v1/user-service/accounts/invest`, 
         {
           bankName: selectedBank,
           accountNumber,

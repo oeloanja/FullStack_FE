@@ -31,7 +31,7 @@ export function PasswordVerification({ onVerificationSuccess }: PasswordVerifica
     console.log('Sending request with userId:', userBorrowId);
 
     try {
-      const response = await api.post(`/api/v1/user_service/users/borrow/verify-password`, {
+      const response = await api.post(`/api/v1/user-service/users/borrow/verify-password`, {
         password: password
       }, {
         params: { userId: userBorrowId }, // Updated to use userBorrowId

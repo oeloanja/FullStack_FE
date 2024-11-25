@@ -49,7 +49,7 @@ export default function InvestMyPage({ verificationToken }: { verificationToken:
 
     try {
       console.log('사용자 정보 요청 시작:', { userInvestId, verificationToken: verificationToken.slice(0, 10) + '...' })
-      const response = await api.get(`/api/v1/user_service/users/invest/mypage`, {
+      const response = await api.get(`/api/v1/user-service/users/invest/mypage`, {
         params: { userId: userInvestId },
         headers: {
           'Authorization': `Bearer ${verificationToken}`,
@@ -88,7 +88,7 @@ export default function InvestMyPage({ verificationToken }: { verificationToken:
 
     try {
       console.log('계좌 정보 요청 시작:', { userInvestId, token: token.slice(0, 10) + '...' })
-      const response = await api.get(`/api/v1/user_service/accounts/invest`, {
+      const response = await api.get(`/api/v1/user-service/accounts/invest`, {
         params: { userId: userInvestId },
         headers: {
           'Content-Type': 'application/json',

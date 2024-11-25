@@ -13,7 +13,7 @@ interface SignupResponse {
 
 async function registerUser(userData: any): Promise<SignupResponse> {
   try {
-    const response = await api.post('/api/v1/user_service/users/borrow/signup',
+    const response = await api.post('/api/v1/user-service/users/borrow/signup',
       ({
         email: userData.email,
         password: userData.password,

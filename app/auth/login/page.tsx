@@ -37,7 +37,7 @@ export default function LoginPage() {
 
   async function loginUser(email: string, password: string, userType: 'borrow' | 'invest'): Promise<LoginResponse> {
     try {
-      const response = await api.post(`api/v1/user_service/users/${userType}/login`,
+      const response = await api.post(`api/v1/user-service/users/${userType}/login`,
       ({ email, password }),
       {
         method: 'POST',

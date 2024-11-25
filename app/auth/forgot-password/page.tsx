@@ -19,7 +19,7 @@ export default function ForgotPasswordPage() {
     setSuccessMessage(null)
 
     try {
-      const response = await api.post('/api/v1/user_service/users/borrow/find-password', {
+      const response = await api.post('/api/v1/user-service/users/borrow/find-password', {
         email,
         userName,
         phone

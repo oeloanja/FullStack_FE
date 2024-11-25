@@ -88,7 +88,7 @@ export default function BorrowerMyPage({ verificationToken }: { verificationToke
 
     try {
       console.log('계좌 정보 요청 시작:', { userBorrowId, token: token.slice(0, 10) + '...' })
-      const response = await api.get(`/api/v1/user_service/accounts/borrow`, {
+      const response = await api.get(`/api/v1/user-service/accounts/borrow`, {
         params: { userId: userBorrowId },
         headers: {
           'Content-Type': 'application/json',

@@ -31,7 +31,7 @@ export function PasswordVerification({ onVerificationSuccess }: PasswordVerifica
     console.log('Sending request with userId:', userInvestId);
 
     try {
-      const response = await api.post(`/api/v1/user_service/users/invest/verify-password`, {
+      const response = await api.post(`/api/v1/user-service/users/invest/verify-password`, {
         password: password
       }, {
         params: { userId: userInvestId },

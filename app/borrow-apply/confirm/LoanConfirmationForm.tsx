@@ -41,7 +41,7 @@ export default function LoanConfirmationForm({ period }: { period: number }) {
     }
 
     try {
-      const response = await api.post('/v1/loans/register/success', loanRequestData)
+      const response = await api.post('/v1/loan-service/register/success', loanRequestData)
 
       if (response.status === 200) {
         const result = response.data

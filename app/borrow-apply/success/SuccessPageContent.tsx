@@ -37,7 +37,7 @@ export default function SuccessPageContent() {
     }
 
     try {
-      const response = await fetch(`/api/v1/loans/${loanId}/assign-group`, {
+      const response = await fetch(`/api/v1/loan-service/${loanId}/assign-group`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

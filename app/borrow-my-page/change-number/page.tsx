@@ -41,7 +41,7 @@ export default function ChangePhoneNumber() {
 
     try {
       const response = await api.put(
-        "/api/v1/user_service/users/borrow/phone",
+        "/api/v1/user-service/users/borrow/phone",
         { phone: phoneNumber },
         {
           params: { userId: userBorrowId },
