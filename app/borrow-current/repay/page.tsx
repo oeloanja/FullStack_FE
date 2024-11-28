@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from 'next/navigation'
 import { Button } from "@/components/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/dialog"
 import { useUser } from "@/contexts/UserContext"
@@ -15,12 +16,73 @@ interface Account {
 }
 
 export default function RepaymentPage() {
+  const router = useRouter()
   const [repaymentAmount, setRepaymentAmount] = useState("")
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [accounts, setAccounts] = useState<Account[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
   const { userBorrowId } = useUser()
+  const [loanId, setLoanId] = useState<number | null>(null)
+  const [requiredAmount, setRequiredAmount] = useState<number | null>(null)
+
+  useEffect(() => {
+    const fetchCurrentLoan = async () => {
+      try {
+        if (!userBorrowId) return;
+        
+        const response = await api.get(`/api/v1/loan-service/history/${userBorrowId}/filter`, {
+          params: { loanStatus: 1 },
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.data && response.data.length > 0) {
+          setLoanId(response.data[0].loanId);
+        } else {
+          toast.error('현재 진행중인 대출이 없습니다.');
+          router.push('/borrow-current');
+        }
+      } catch (error) {
+        console.error('대출 정보 조회 중 오류 발생:', error);
+        toast.error('대출 정보를 불러오는데 실패했습니다.');
+      }
+    };
+
+    fetchCurrentLoan();
+  }, [userBorrowId, router]);
+
+  useEffect(() => {
+    const fetchRepaymentAmount = async () => {
+      if (!loanId) return;
+    
+      try {
+        const token = getToken();
+        if (!token) return;
+
+        const response = await api.get(`/api/v1/repayment-service`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.data) {
+          const repayment = response.data.find(r => r.loanId === loanId);
+          if (repayment) {
+            const total = parseFloat(repayment.repaymentPrincipal) + parseFloat(repayment.repaymentInterest);
+            setRequiredAmount(total);
+          }
+        }
+      } catch (error) {
+        console.error('상환 정보 조회 중 오류 발생:', error);
+        toast.error('상환 정보를 불러오는데 실패했습니다.');
+      }
+    };
+
+    fetchRepaymentAmount();
+  }, [loanId]);
 
   const fetchAccounts = async () => {
     const token = getToken()
@@ -71,10 +133,58 @@ export default function RepaymentPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Implement repayment logic here
-    console.log("Repayment submitted", { repaymentAmount, selectedAccount })
+    
+    if (!loanId) {
+      toast.error('대출 정보를 찾을 수 없습니다.');
+      return;
+    }
+
+    if (!selectedAccount) {
+      toast.error('계좌를 선택해주세요.');
+      return;
+    }
+
+    if (!repaymentAmount || parseFloat(repaymentAmount) <= 0) {
+      toast.error('올바른 상환 금액을 입력해주세요.');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const token = getToken();
+      if (!token) {
+        throw new Error('인증 토큰이 없습니다.');
+      }
+
+      const response = await api.post(
+        '/api/v1/repayment-service/create/repayment-process',
+        {
+          loanId: loanId,
+          actualRepaymentAmount: parseFloat(repaymentAmount)
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+
+      if (response.status === 200) {
+        toast.success('상환이 성공적으로 처리되었습니다.');
+        router.push('/borrow-current');
+      } else {
+        throw new Error('상환 처리에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('상환 처리 중 오류 발생:', error);
+      toast.error('상환 처리 중 오류가 발생했습니다. 다시 시도해 주세요.');
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -94,12 +204,20 @@ export default function RepaymentPage() {
             <label htmlFor="amount" className="block text-sm font-medium text-gray-600">
               상환금
             </label>
+            {requiredAmount !== null && (
+              <div className="mb-2 text-sm text-gray-600">
+                이번 회차에 갚아야 할 금액: {requiredAmount.toLocaleString()}원
+              </div>
+            )}
             <input
               id="amount"
               type="text"
               placeholder="상환금 입력"
               value={repaymentAmount}
-              onChange={(e) => setRepaymentAmount(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^0-9]/g, '');
+                setRepaymentAmount(value);
+              }}
               className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm"
             />
           </div>
@@ -120,6 +238,7 @@ export default function RepaymentPage() {
                 )}
               </div>
               <Button 
+                type="button"
                 onClick={fetchAccounts}
                 className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-[10px] h-12"
               >
@@ -131,9 +250,10 @@ export default function RepaymentPage() {
           {/* Submit Button */}
           <Button 
             type="submit"
-            className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-md h-14 text-lg mt-8"
+            disabled={isLoading}
+            className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-md h-14 text-lg mt-8 disabled:opacity-50"
           >
-            상환하기
+            {isLoading ? '처리 중...' : '상환하기'}
           </Button>
         </form>
       </main>

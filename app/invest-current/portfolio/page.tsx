@@ -26,52 +26,33 @@ export default function PortfolioPage() {
         return
       }
 
-    const response = await api.get(`/api/v1/invest-service/portfolios/${userInvestId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    })
-
-    if (response.data) {
-      setPortfolio(response.data)
-    } else {
-      throw new Error('포트폴리오 데이터가 없습니다.')
-    }
-  } catch (error) {
-    console.error('포트폴리오 조회 중 오류:', error)
-    if (error.response && error.response.status === 404) {
-      toast.error('포트폴리오가 존재하지 않습니다. 투자를 먼저 진행해주세요.')
-    } else {
-      toast.error('포트폴리오 정보를 불러오는데 실패했습니다.')
-    }
-  }
-}
-
-  const fetchInvestments = async () => {
-    try {
-      const token = getToken()
-      if (!token || !userInvestId) {
-        toast.error('로그인이 필요합니다.')
-        return
-      }
-
-      console.log('Fetching investments for user:', userInvestId) // 디버깅용
-
-      const response = await api.get(`/api/v1/invest-service/investments/user/${userInvestId}`, {
+      const response = await api.get(`/api/v1/invest-service/portfolios/${userInvestId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
 
-      if (Array.isArray(response.data)) {
-        setInvestments(response.data)
-      } else {
-        console.error('Invalid investments data:', response.data)
-        throw new Error('투자 목록 데이터 형식이 올바르지 않습니다.')
+      if (response.data) {
+        setPortfolio(response.data)
+        // Initialize investments array with a single investment based on portfolio data
+        setInvestments([{
+          id: response.data.portfolioId,
+          groupName: `투자 그룹 ${response.data.portfolioId}`,
+          amount: response.data.totalInvestedAmount,
+          grade: 'B',  // Default grade or you can add this to the portfolio response
+          expectedRate: 0,  // Add to portfolio response if needed
+          actualRate: response.data.totalReturnRate,
+          period: '12개월',  // Add to portfolio response if needed
+          status: '투자 중'  // Add to portfolio response if needed
+        }])
       }
     } catch (error) {
-      console.error('투자 목록 조회 중 상세 오류:', error)
-      toast.error('투자 목록을 불러오는데 실패했습니다.')
+      console.error('포트폴리오 조회 중 오류:', error)
+      if (error.response && error.response.status === 404) {
+        toast.error('포트폴리오가 존재하지 않습니다. 투자를 먼저 진행해주세요.')
+      } else {
+        toast.error('포트폴리오 정보를 불러오는데 실패했습니다.')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -85,7 +66,6 @@ export default function PortfolioPage() {
     }
     
     fetchPortfolio()
-    fetchInvestments()
   }, [userInvestId])
 
   const filteredInvestments = selectedFilter === '전체보기' 
