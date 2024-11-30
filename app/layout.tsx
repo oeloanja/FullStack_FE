@@ -8,7 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext"
 import { TokenProvider } from '@/contexts/TokenContext'
 
 export const metadata: Metadata = {
-  title: "BillIT - 외국인을 위한 금융",
+  title: "BilliT - 외국인을 위한 금융",
   description: "대한민국 모든 비즈니스를 더욱 성장시키는 금융 서비스",
   icons: {
     icon: "/icon.png",
