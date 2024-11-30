@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import api from '@/utils/api'
 import { getToken } from '@/utils/auth'
 import { toast } from 'react-hot-toast'
-import type { InvestmentDetail } from '@/types/portpolio'
+import type { InvestmentDetail } from '@/types/portfolio'
 
 export default function InvestmentDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter()

@@ -8,7 +8,7 @@ import { useUser } from "@/contexts/UserContext"
 import api from '@/utils/api'
 import { getToken } from '@/utils/auth'
 import { toast } from 'react-hot-toast'
-import type { Investment, InvestmentPortfolio } from '@/types/portpolio'
+import type { Investment, InvestmentPortfolio, InvestmentResponse } from '@/types/portfolio'
 
 export default function PortfolioPage() {
   const { userInvestId } = useUser()
@@ -18,7 +18,16 @@ export default function PortfolioPage() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
-  const fetchPortfolio = async () => {
+  const mapInvestmentStatus = (statusType: number): '투자 중' | '상환 완료' | '투자 대기' => {
+    switch (statusType) {
+      case 0: return '투자 대기'
+      case 1: return '투자 중'
+      case 2: return '상환 완료'
+      default: return '투자 대기'
+    }
+  }
+
+  const fetchData = async () => {
     try {
       const token = getToken()
       if (!token || !userInvestId) {
@@ -26,32 +35,39 @@ export default function PortfolioPage() {
         return
       }
 
-      const response = await api.get(`/api/v1/invest-service/portfolios/${userInvestId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      // Fetch portfolio data
+      const portfolioResponse = await api.get<InvestmentPortfolio>(
+        `/api/v1/invest-service/portfolios/${userInvestId}`
+      )
 
-      if (response.data) {
-        setPortfolio(response.data)
-        // Initialize investments array with a single investment based on portfolio data
-        setInvestments([{
-          id: response.data.portfolioId,
-          groupName: `투자 그룹 ${response.data.portfolioId}`,
-          amount: response.data.totalInvestedAmount,
-          grade: 'B',  // Default grade or you can add this to the portfolio response
-          expectedRate: 0,  // Add to portfolio response if needed
-          actualRate: response.data.totalReturnRate,
-          period: '12개월',  // Add to portfolio response if needed
-          status: '투자 중'  // Add to portfolio response if needed
-        }])
+      // Fetch investments data
+      const investmentsResponse = await api.get<InvestmentResponse[]>(
+        `/api/v1/invest-service/investments/${userInvestId}`
+      )
+
+      if (portfolioResponse.data) {
+        setPortfolio(portfolioResponse.data)
+      }
+
+      if (investmentsResponse.data) {
+        const mappedInvestments: Investment[] = investmentsResponse.data.map(inv => ({
+          id: inv.investmentId,
+          groupName: `투자 그룹 ${inv.groupId}`,
+          amount: inv.investmentAmount,
+          grade: 'B', // This should come from backend
+          expectedRate: inv.expectedReturnRate,
+          actualRate: inv.actualReturnRate,
+          period: '12개월', // This should come from backend
+          status: mapInvestmentStatus(inv.investStatusType)
+        }))
+        setInvestments(mappedInvestments)
       }
     } catch (error) {
-      console.error('포트폴리오 조회 중 오류:', error)
-      if (error.response && error.response.status === 404) {
+      console.error('데이터 조회 중 오류:', error)
+      if (error.response?.status === 404) {
         toast.error('포트폴리오가 존재하지 않습니다. 투자를 먼저 진행해주세요.')
       } else {
-        toast.error('포트폴리오 정보를 불러오는데 실패했습니다.')
+        toast.error('데이터를 불러오는데 실패했습니다.')
       }
     } finally {
       setIsLoading(false)
@@ -65,7 +81,7 @@ export default function PortfolioPage() {
       return
     }
     
-    fetchPortfolio()
+    fetchData()
   }, [userInvestId])
 
   const filteredInvestments = selectedFilter === '전체보기' 
@@ -161,8 +177,8 @@ export default function PortfolioPage() {
                   <td className="py-4 px-4 text-center">{investment.groupName}</td>
                   <td className="py-4 px-4 text-center">{investment.amount.toLocaleString()}원</td>
                   <td className="py-4 px-4 text-center">{investment.grade}</td>
-                  <td className="py-4 px-4 text-center">{investment.expectedRate}%</td>
-                  <td className="py-4 px-4 text-center">{investment.actualRate}%</td>
+                  <td className="py-4 px-4 text-center">{investment.expectedRate?.toFixed(1) ?? 0}%</td>
+                  <td className="py-4 px-4 text-center">{investment.actualRate?.toFixed(1) ?? 0}%</td>
                   <td className="py-4 px-4 text-center">{investment.period}</td>
                   <td className="py-4 px-4 text-center">
                     <span className={`px-2 py-1 rounded-full text-xs ${

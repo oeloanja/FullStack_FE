@@ -34,3 +34,17 @@ export interface PaymentStatus {
   status: '정산완료' | '정산예정'
 }
 
+export interface InvestmentResponse {
+  investmentId: number
+  groupId: number
+  userInvestorId: number
+  accountInvestorId: number
+  investmentAmount: number
+  investmentDate: string
+  expectedReturnRate: number
+  createdAt: string
+  investStatusType: number
+  settlementRatio: number
+  actualReturnRate: number
+}
+
