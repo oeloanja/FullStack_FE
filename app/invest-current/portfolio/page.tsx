@@ -18,11 +18,12 @@ export default function PortfolioPage() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
-  const mapInvestmentStatus = (statusType: number): '투자 중' | '상환 완료' | '투자 대기' => {
+  const mapInvestmentStatus = (statusType: number): '투자 중' | '상환 완료' | '투자 대기' | '투자 취소' => {
     switch (statusType) {
       case 0: return '투자 대기'
       case 1: return '투자 중'
       case 2: return '상환 완료'
+      case 3: return '투자 취소'
       default: return '투자 대기'
     }
   }
@@ -42,7 +43,7 @@ export default function PortfolioPage() {
 
       // Fetch investments data
       const investmentsResponse = await api.get<InvestmentResponse[]>(
-        `/api/v1/invest-service/investments/${userInvestId}`
+        `/api/v1/invest-service/investments/list?userInvestorId=${userInvestId}`
       )
 
       if (portfolioResponse.data) {
@@ -54,10 +55,9 @@ export default function PortfolioPage() {
           id: inv.investmentId,
           groupName: `투자 그룹 ${inv.groupId}`,
           amount: inv.investmentAmount,
-          grade: 'B', // This should come from backend
+          grade: '', // This will be empty as per the request
           expectedRate: inv.expectedReturnRate,
           actualRate: inv.actualReturnRate,
-          period: '12개월', // This should come from backend
           status: mapInvestmentStatus(inv.investStatusType)
         }))
         setInvestments(mappedInvestments)
@@ -166,7 +166,6 @@ export default function PortfolioPage() {
                 <th className="py-3 px-4 text-center">평균신용도</th>
                 <th className="py-3 px-4 text-center">기대 수익률</th>
                 <th className="py-3 px-4 text-center">실제 수익률</th>
-                <th className="py-3 px-4 text-center">투자기간</th>
                 <th className="py-3 px-4 text-center">투자상태</th>
                 <th className="py-3 px-4 text-left"></th>
               </tr>
@@ -179,7 +178,6 @@ export default function PortfolioPage() {
                   <td className="py-4 px-4 text-center">{investment.grade}</td>
                   <td className="py-4 px-4 text-center">{investment.expectedRate?.toFixed(1) ?? 0}%</td>
                   <td className="py-4 px-4 text-center">{investment.actualRate?.toFixed(1) ?? 0}%</td>
-                  <td className="py-4 px-4 text-center">{investment.period}</td>
                   <td className="py-4 px-4 text-center">
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       investment.status === '투자 중' ? 'bg-green-100 text-green-800' :
