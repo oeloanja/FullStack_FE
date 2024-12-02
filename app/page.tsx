@@ -1,4 +1,6 @@
-// import Image from "next/image"
+'use client'
+
+import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/button"
 import { Card } from "@/components/card"
@@ -24,7 +26,15 @@ export default function Home() {
               챗봇에게 간편하게 상담해보기!
             </Button>
           </div>
-          <div className="aspect-[4/3] bg-gray-100 rounded-lg mt-8 md:mt-0" />
+          <div className="relative aspect-[4/3] rounded-lg mt-8 md:mt-0 overflow-hidden">
+            <Image
+              src="/main_1.jpg"
+              alt="Unity and cooperation represented by joined hands"
+              fill
+              className="object-cover"
+              priority
+            />
+          </div>
         </div>
       </section>
 
@@ -37,34 +47,47 @@ export default function Home() {
       {/* Features Grid */}
       <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 space-y-8 bg-[#F7F7F7]">
         <Card className="p-4 sm:p-6 flex flex-col md:flex-row items-center gap-4 sm:gap-6">
-        <div className="md:w-1/2 aspect-video bg-gray-100 rounded-lg" />
+          <div className="md:w-1/2 aspect-video relative rounded-lg overflow-hidden">
+            <Image
+              src="/loan_1.jpg"
+              alt="Financial transaction showing Euro banknotes"
+              fill
+              className="object-cover"
+            />
+          </div>
           <div className="md:w-1/2 space-y-2 sm:space-y-4 text-center md:text-left">
-            <h3 className="text-xl sm:text-2xl font-bold text-[#23E2C2]">대출하기</h3>
-            <p className="text-sm sm:text-base text-gray-600">
+            <h3 className="text-xl sm:text-4xl font-bold text-[#23E2C2]">대출하기</h3>
+            <p className="text-sm ml-1 sm:text-base text-gray-600">
               출근길에 신청하면<br className="sm:hidden" /> 퇴근길에 송금완료
             </p>
             <Link href="/detail/borrow">
-            <Button  className="rounded-full text-sm sm:text-base bg-white hover:bg-[#23E2C2]">
-              더 알아보기
-            </Button>
+              <Button className="rounded-full text-sm mt-4 sm:text-base bg-white hover:bg-[#23E2C2]">
+                더 알아보기
+              </Button>
             </Link>
           </div>
         </Card>
 
         <Card className="p-4 sm:p-6 flex flex-col md:flex-row-reverse items-center gap-4 sm:gap-6">
-        <div className="md:w-1/2 aspect-video bg-gray-100 rounded-lg" />
+          <div className="md:w-1/2 aspect-video relative rounded-lg overflow-hidden">
+            <Image
+              src="/investment_1.jpg"
+              alt="Professional business handshake"
+              fill
+              className="object-cover"
+            />
+          </div>
           <div className="md:w-1/2 space-y-2 sm:space-y-4 text-center md:text-left">
-            <h3 className="text-xl sm:text-2xl font-bold text-[#23E2C2]">투자하기</h3>
-            <p className="text-sm sm:text-base text-gray-600">
+            <h3 className="text-xl sm:text-4xl font-bold text-[#23E2C2]">투자하기</h3>
+            <p className="text-sm ml-1 sm:text-base text-gray-600">
               P2P 대출, 수익성 UP!<br className="sm:hidden" /> 분산투자, 리스크 DOWN!
             </p>
             <Link href="/detail/invest">
-            <Button className="rounded-full text-sm sm:text-base bg-white hover:bg-[#23E2C2]">
-              더 알아보기
-            </Button>
+              <Button className="rounded-full mt-4 text-sm sm:text-base bg-white hover:bg-[#23E2C2]">
+                더 알아보기
+              </Button>
             </Link>
           </div>
-          
         </Card>
       </section>
 
@@ -85,3 +108,4 @@ export default function Home() {
     </div>
   )
 }
+
