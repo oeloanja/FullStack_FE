@@ -11,6 +11,7 @@ import { toast } from 'react-hot-toast'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/dialog"
 import { getToken } from '@/utils/auth'
 import Script from 'next/script'
+import { formatNumber, parseNumber } from '@/utils/numberFormat';
 
 interface Account {
   accountId: number
@@ -34,6 +35,7 @@ export default function LoanApplicationForm() {
   const [error, setError] = useState<string | null>(null)
   const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { control, handleSubmit, setValue, watch } = useForm({
     defaultValues: {
@@ -60,36 +62,48 @@ export default function LoanApplicationForm() {
   const periods = ["3개월", "6개월", "12개월"]
 
   const onSubmit = async (data) => {
+    console.log('onSubmit 함수 시작');
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
     if (!selectedAccountId) {
       toast.error('계좌를 선택해주세요.');
+      setIsSubmitting(false);
       return;
     }
 
     if (!userBorrowId) {
       toast.error('사용자 정보를 찾을 수 없습니다.');
+      setIsSubmitting(false);
       return;
     }
 
-    const loanAmount = parseFloat(data.loanAmount);
+    const loanAmount = parseNumber(data.loanAmount);
     if (isNaN(loanAmount) || loanAmount <= 0) {
       toast.error('올바른 대출 금액을 입력해주세요.');
+      setIsSubmitting(false);
       return;
     }
 
     // 선택된 기간을 월 단위의 숫자로 변환
     const termInMonths = parseInt(data.selectedPeriod);
 
-    // 대출 신청 데이터를 로컬 스토리지에 저장
+    // 대출 신청 데이터 준비
     const loanApplicationData = {
       userBorrowId: userBorrowId,
       accountBorrowId: selectedAccountId,
       loanAmount: loanAmount,
       term: termInMonths
     };
+
+    // 로컬 스토리지에 데이터 저장
     localStorage.setItem('loanApplicationData', JSON.stringify(loanApplicationData));
+    
+    console.log('저장된 대출 신청 데이터:', localStorage.getItem('loanApplicationData'));
 
     // 신용 평가 페이지로 이동
     router.push('/borrow-apply/credit');
+    setIsSubmitting(false);
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
@@ -377,8 +391,7 @@ export default function LoanApplicationForm() {
               </select>
             )}
           />
-          <p className="text-xs text-gray-500 mt-1
-">* 상환기간은 원리금 균등상환으로 고정됩니다</p>
+          <p className="text-xs text-gray-500 mt-1">* 상환기간은 원리금 균등상환으로 고정됩니다</p>
         </div>
 
         <div>
@@ -387,12 +400,15 @@ export default function LoanApplicationForm() {
             name="loanAmount"
             control={control}
             rules={{ required: '대출 금액을 입력해주세요.' }}
-            render={({ field }) => (
+            render={({ field: { onChange, value } }) => (
               <input
-                {...field}
-                type="number"
+                type="text"
                 placeholder="대출 희망 금액 (원)"
                 className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-[10px] text-sm"
+                value={formatNumber(value)}
+                onChange={(e) => {
+                  onChange(e.target.value);
+                }}
               />
             )}
           />
@@ -427,8 +443,9 @@ export default function LoanApplicationForm() {
       <Button 
         type="submit"
         className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-[10px] h-14 text-lg mt-8 col-span-2"
+        disabled={isSubmitting}
       >
-        신용 평가 받기
+        {isSubmitting ? '처리 중...' : '신용 평가 받기'}
       </Button>
 
       {/* Account Selection Modal */}

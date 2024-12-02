@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import api from '@/utils/api'
 import { getToken } from '@/utils/auth'
 import { toast } from 'react-hot-toast'
+import { formatNumber, parseNumber } from '@/utils/numberFormat'
 
 interface LoanGroup {
   groupId: number
@@ -67,8 +68,9 @@ export default function InvestmentSelection() {
   }, [router])
 
   const handleAmountChange = (id: number, value: string) => {
+    const formattedValue = formatNumber(value)
     setInvestments(investments.map(inv => 
-      inv.groupId === id ? { ...inv, amount: value } : inv
+      inv.groupId === id ? { ...inv, amount: formattedValue } : inv
     ))
   }
 
@@ -116,12 +118,12 @@ export default function InvestmentSelection() {
       const { userInvestId, accountInvestId } = JSON.parse(investData)
 
       const selectedInvestments = investments
-        .filter(inv => inv.amount && parseFloat(inv.amount) > 0)
+        .filter(inv => inv.amount && parseNumber(inv.amount) > 0)
         .map(inv => ({
           groupId: inv.groupId,
           userInvestorId: userInvestId,
           accountInvestorId: accountInvestId,
-          investmentAmount: parseFloat(inv.amount!),
+          investmentAmount: parseNumber(inv.amount!),
           expectedReturnRate: inv.intRate
         }))
 

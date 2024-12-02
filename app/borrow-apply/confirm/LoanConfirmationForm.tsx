@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import api from '@/utils/api'
 import { useUser } from "@/contexts/UserContext"
 import { toast } from 'react-hot-toast'
+import { formatNumber, parseNumber } from '@/utils/numberFormat'
 
 export default function LoanConfirmationForm({ period }: { period: number }) {
   const router = useRouter()
@@ -24,11 +25,11 @@ export default function LoanConfirmationForm({ period }: { period: number }) {
 
     if (!loanAmount) {
       console.error('대출 금액이 입력되지 않았습니다.');
-      toast.error('대출 금액을 입력해주세요.');
+      toast.error('올바른 대출 금액을 입력해주세요.');
       return;
     }
 
-    const loanAmountInWon = parseFloat(loanAmount) * 10000; // 만원 단위를 원 단위로 변환
+    const loanAmountInWon = parseNumber(loanAmount);
 
     const loanRequestData = {
       userBorrowId: userBorrowId,
@@ -46,10 +47,16 @@ export default function LoanConfirmationForm({ period }: { period: number }) {
     setIsLoading(true);
 
     try {
+      const token = getToken();
+      if (!token) {
+        toast.error('인증 토큰이 없습니다. 다시 로그인해주세요.');
+        return;
+      }
 
       const response = await api.post('/api/v1/loan-service/register/success', loanRequestData, {
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -86,10 +93,13 @@ export default function LoanConfirmationForm({ period }: { period: number }) {
         <input
           ref={loanAmountRef}
           type="text"
-          placeholder="대출 희망 금액 입력 (단위: 만원)"
+          placeholder="대출 희망 금액 입력 (원)"
           className="w-full h-12 px-4 py-2 bg-gray-50 border border-gray-200 rounded-[10px] text-sm"
           onChange={(e) => {
-            e.target.value = e.target.value.replace(/[^0-9]/g, '')
+            const formatted = formatNumber(e.target.value);
+            if (loanAmountRef.current) {
+              loanAmountRef.current.value = formatted;
+            }
           }}
         />
       </div>
@@ -107,5 +117,10 @@ export default function LoanConfirmationForm({ period }: { period: number }) {
       </p>
     </form>
   )
+}
+
+function getToken() {
+  // 토큰 가져오는 로직 추가
+  return localStorage.getItem('token');
 }
 
