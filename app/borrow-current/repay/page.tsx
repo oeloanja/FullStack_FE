@@ -8,6 +8,7 @@ import { useUser } from "@/contexts/UserContext"
 import api from '@/utils/api'
 import { getToken } from '@/utils/auth'
 import { toast } from 'react-hot-toast'
+import { formatNumber, parseNumber } from '@/utils/numberFormat';
 
 interface Account {
   accountId: number
@@ -146,7 +147,7 @@ export default function RepaymentPage() {
       return;
     }
 
-    if (!repaymentAmount || parseFloat(repaymentAmount) <= 0) {
+    if (!repaymentAmount || parseNumber(repaymentAmount) <= 0) {
       toast.error('올바른 상환 금액을 입력해주세요.');
       return;
     }
@@ -163,7 +164,7 @@ export default function RepaymentPage() {
         '/api/v1/repayment-service/create/repayment-process',
         {
           loanId: loanId,
-          actualRepaymentAmount: parseFloat(repaymentAmount)
+          actualRepaymentAmount: parseNumber(repaymentAmount)
         },
         {
           headers: {
@@ -206,7 +207,7 @@ export default function RepaymentPage() {
             </label>
             {requiredAmount !== null && (
               <div className="mb-2 text-sm text-gray-600">
-                이번 회차에 갚아야 할 금액: {requiredAmount.toLocaleString()}원
+                이번 회차에 갚아야 할 금액: {formatNumber(requiredAmount)}원
               </div>
             )}
             <input
@@ -215,10 +216,10 @@ export default function RepaymentPage() {
               placeholder="상환금 입력"
               value={repaymentAmount}
               onChange={(e) => {
-                const value = e.target.value.replace(/[^0-9]/g, '');
-                setRepaymentAmount(value);
+                const formatted = formatNumber(e.target.value);
+                setRepaymentAmount(formatted);
               }}
-              className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm"
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md text-lg"
             />
           </div>
 
