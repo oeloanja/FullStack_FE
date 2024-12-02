@@ -1,8 +1,8 @@
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "BillIT - 투자 신청",
-  description: "BillIT 투자 신청",
+  title: "BilliT - 투자 신청",
+  description: "BilliT 투자 신청",
 }
 
 export default function AuthLayout({
