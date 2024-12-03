@@ -6,8 +6,6 @@ import Link from "next/link"
 import { useRouter } from 'next/navigation'
 import { Toast } from "@/components/toast"
 import { useAuth } from "@/contexts/AuthContext"
-import { useUser } from "@/contexts/UserContext"
-import { useToken } from '@/contexts/TokenContext'
 import api from '@/utils/api'
 
 interface LoginResponse {
@@ -32,28 +30,19 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const { login } = useAuth()
-  const { setUserType, setUserBorrowId, setUserInvestId } = useUser()
-  const { setToken } = useToken()
 
   async function loginUser(email: string, password: string, userType: 'borrow' | 'invest'): Promise<LoginResponse> {
     try {
       const response = await api.post(`api/v1/user-service/users/${userType}/login`,
-      ({ email, password }),
+      { email, password },
       {
-        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         }
       })
 
-      const data = await response.data
-      
-      if (response.status !== 200) {
-        throw new Error(data.message || '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.')
-      }
-
-      return data
+      return response.data
     } catch (error) {
       console.error('API 호출 중 오류 발생:', error)
       throw error
@@ -70,28 +59,12 @@ export default function LoginPage() {
       const response = await loginUser(formData.email, formData.password, userType)
 
       if (response.accessToken) {
-        setToken(response.accessToken) 
+        login(response.accessToken, userType, response.user)
+        setToast({ message: '로그인에 성공했습니다.', type: 'success' })
+        router.push('/')
       } else {
         throw new Error('토큰을 가져오지 못했습니다.')
       }
-
-      if (userType === 'borrow' && response.user.userBorrowId) {
-        setUserBorrowId(response.user.userBorrowId)
-      } else {
-        setUserBorrowId(null)
-      }
-
-      if (userType === 'invest' && response.user.userInvestId) {
-        setUserInvestId(response.user.userInvestId)
-      } else {
-        setUserInvestId(null)
-      }
-
-      login(response.accessToken, userType, response.user)
-      setUserType(userType)
-
-      setToast({ message: '로그인에 성공했습니다.', type: 'success' })
-      router.push('/')
     } catch (error) {
       console.error('로그인 오류:', error)
       setToast({ 
@@ -187,3 +160,4 @@ export default function LoginPage() {
     </div>
   )
 }
+

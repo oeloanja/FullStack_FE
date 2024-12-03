@@ -2,8 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/button"
-import { useUser } from "@/contexts/UserContext"
-import { useToken } from "@/contexts/TokenContext"
+import { useAuth } from "@/contexts/AuthContext"
 import api from '@/utils/api'
 
 interface PasswordVerificationProps {
@@ -14,27 +13,26 @@ export function PasswordVerification({ onVerificationSuccess }: PasswordVerifica
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const { userInvestId } = useUser()
-  const { token } = useToken()
+  const { user, token } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
 
-    if (!userInvestId) {
+    if (!user?.userInvestId) {
       setError("사용자 ID가 없습니다. 다시 로그인해주세요.");
       setIsLoading(false);
       return;
     }
 
-    console.log('Sending request with userId:', userInvestId);
+    console.log('Sending request with userId:', user.userInvestId);
 
     try {
       const response = await api.post(`/api/v1/user-service/users/invest/verify-password`, {
         password: password
       }, {
-        params: { userId: userInvestId },
+        params: { userId: user.userInvestId },
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`

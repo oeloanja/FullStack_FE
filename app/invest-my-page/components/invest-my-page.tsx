@@ -5,8 +5,6 @@ import { Button } from "@/components/button"
 import { Check } from 'lucide-react'
 import Link from "next/link"
 import { useAuth } from "@/contexts/AuthContext"
-import { useUser } from "@/contexts/UserContext"
-import { useToken } from "@/contexts/TokenContext"
 import { useRouter, useSearchParams } from 'next/navigation'
 import api from '@/utils/api'
 
@@ -26,31 +24,29 @@ type UserInfo = {
   phone: string
 }
 
-export default function InvestMyPage({ verificationToken }: { verificationToken: string }) {
+export default function InvestorMyPage({ verificationToken }: { verificationToken: string }) {
   const [activeTab, setActiveTab] = useState<'personal' | 'account'>('personal')
   const [accounts, setAccounts] = useState<BankAccount[]>([])
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const { userType } = useAuth()
-  const { userInvestId } = useUser()
-  const { token } = useToken()
+  const { user, userType, token } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const refresh = searchParams.get('refresh')
 
   const fetchUserData = useCallback(async () => {
-    if (!userInvestId || !verificationToken) {
-      console.error('사용자 ID 또는 검증 토큰이 없습니다:', { userInvestId, verificationToken })
+    if (!user?.userInvestId || !verificationToken) {
+      console.error('사용자 ID 또는 검증 토큰이 없습니다:', { userInvestId: user?.userInvestId, verificationToken })
       setError('사용자 정보를 불러올 수 없습니다. 다시 로그인해주세요.')
       return
     }
 
     try {
-      console.log('사용자 정보 요청 시작:', { userInvestId, verificationToken: verificationToken.slice(0, 10) + '...' })
+      console.log('사용자 정보 요청 시작:', { userInvestId: user.userInvestId, verificationToken: verificationToken.slice(0, 10) + '...' })
       const response = await api.get(`/api/v1/user-service/users/invest/mypage`, {
-        params: { userId: userInvestId },
+        params: { userId: user.userInvestId },
         headers: {
           'Authorization': `Bearer ${verificationToken}`,
           'Content-Type': 'application/json'
@@ -69,11 +65,11 @@ export default function InvestMyPage({ verificationToken }: { verificationToken:
       console.error("사용자 정보 조회 오류:", error)
       setError('사용자 정보를 불러오는데 실패했습니다. 네트워크 연결을 확인하고 다시 시도해주세요.')
     }
-  }, [userInvestId, verificationToken])
+  }, [user?.userInvestId, verificationToken])
 
   const fetchAccounts = useCallback(async () => {
-    if (!userInvestId || userType !== 'invest') {
-      console.error('사용자 인증 실패:', { userInvestId, userType })
+    if (!user?.userInvestId || userType !== 'invest') {
+      console.error('사용자 인증 실패:', { userInvestId: user?.userInvestId, userType })
       setError('사용자 인증에 실패했습니다. 다시 로그인해주세요.')
       setIsLoading(false)
       return
@@ -87,9 +83,9 @@ export default function InvestMyPage({ verificationToken }: { verificationToken:
     }
 
     try {
-      console.log('계좌 정보 요청 시작:', { userInvestId, token: token.slice(0, 10) + '...' })
+      console.log('계좌 정보 요청 시작:', { userInvestId: user.userInvestId, token: token.slice(0, 10) + '...' })
       const response = await api.get(`/api/v1/user-service/accounts/invest`, {
-        params: { userId: userInvestId },
+        params: { userId: user.userInvestId },
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -109,7 +105,7 @@ export default function InvestMyPage({ verificationToken }: { verificationToken:
       console.error("계좌 데이터 조회 오류:", err)
       setError('계좌 데이터를 불러오는데 실패했습니다. 다시 시도해 주세요.')
     }
-  }, [userInvestId, userType, token])
+  }, [user?.userInvestId, userType, token])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -122,7 +118,7 @@ export default function InvestMyPage({ verificationToken }: { verificationToken:
   }, [fetchUserData, fetchAccounts, refresh])
 
   const handleDeleteAccount = async (id: number) => {
-    if (!userInvestId) {
+    if (!user?.userInvestId) {
       console.error('사용자 ID가 없습니다.')
       return
     }
@@ -134,11 +130,11 @@ export default function InvestMyPage({ verificationToken }: { verificationToken:
     }
 
     try {
-      console.log('계좌 삭제 요청 시작:', { accountId: id, userInvestId, token: token.slice(0, 10) + '...' })
+      console.log('계좌 삭제 요청 시작:', { accountId: id, userInvestId: user.userInvestId, token: token.slice(0, 10) + '...' })
       const response = await api.put(`/api/v1/user_service/accounts/invest/${id}/status`, 
         { isDeleted: true },
         {
-          params: { userId: userInvestId },
+          params: { userId: user.userInvestId },
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -172,7 +168,7 @@ export default function InvestMyPage({ verificationToken }: { verificationToken:
     )
   }
 
-  if (!userInfo || userType !== 'invest' || !userInvestId) {
+  if (!userInfo || userType !== 'invest' || !user?.userInvestId) {
     return (
       <div className="text-center mt-8">
         <p>사용자 정보를 불러올 수 없습니다.</p>

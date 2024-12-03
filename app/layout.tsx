@@ -5,7 +5,6 @@ import { UserProvider } from '../contexts/UserContext'
 import localFont from 'next/font/local'
 import "./globals.css"
 import { AuthProvider } from "@/contexts/AuthContext"
-import { TokenProvider } from '@/contexts/TokenContext'
 
 export const metadata: Metadata = {
   title: "BilliT - 외국인을 위한 금융",
@@ -30,7 +29,6 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className={`${pretendard.variable} font-pretendard`}>
-      <TokenProvider>
         <AuthProvider>
           <UserProvider>
             <Header />
@@ -42,7 +40,6 @@ export default function RootLayout({
             <Footer />
           </UserProvider>
         </AuthProvider>
-        </TokenProvider>
       </body>
     </html>
   )

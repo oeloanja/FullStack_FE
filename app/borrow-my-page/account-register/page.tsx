@@ -4,9 +4,8 @@ import { useState } from "react"
 import { Button } from "@/components/button"
 import { ChevronDown } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useUser } from "@/contexts/UserContext"
+import { useAuth } from "@/contexts/AuthContext"
 import api from '@/utils/api'
-import { getToken } from '@/utils/auth'
 
 const banks = ["토스뱅크", "신한은행", "국민은행", "우리은행", "하나은행", "농협은행"]
 
@@ -19,14 +18,14 @@ export default function AccountRegistration() {
   const [error, setError] = useState<string | null>(null)
 
   const router = useRouter()
-  const { userBorrowId } = useUser()
+  const { user, token } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
 
-    if (!userBorrowId) {
+    if (!user?.userBorrowId) {
       setError("인증 정보를 찾을 수 없습니다. 다시 로그인해 주세요.")
       setIsLoading(false)
       return
@@ -38,7 +37,6 @@ export default function AccountRegistration() {
       return
     }
 
-    const token = getToken()
     if (!token) {
       setError("인증 토큰이 없습니다. 다시 로그인해 주세요.")
       setIsLoading(false)
@@ -53,7 +51,7 @@ export default function AccountRegistration() {
           accountHolder
         },
         {
-          params: { userId: userBorrowId },
+          params: { userId: user.userBorrowId },
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -150,3 +148,4 @@ export default function AccountRegistration() {
     </div>
   )
 }
+

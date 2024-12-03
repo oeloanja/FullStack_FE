@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/button"
-import { useUser } from "@/contexts/UserContext"
+import { useAuth } from "@/contexts/AuthContext"
 import api from "@/utils/api"
 import { Toast } from "@/components/toast"
 import { useRouter } from 'next/navigation'
@@ -15,7 +15,7 @@ export default function ChangePassword() {
   const [isLoading, setIsLoading] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null)
   const [verificationToken, setVerificationToken] = useState<string | null>(null)
-  const { userBorrowId } = useUser()
+  const { user } = useAuth()
   const router = useRouter()
 
   const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/
@@ -37,7 +37,7 @@ export default function ChangePassword() {
     setIsLoading(true)
     setToast(null)
 
-    if (!verificationToken || !userBorrowId) {
+    if (!verificationToken || !user?.userBorrowId) {
       setToast({ message: "인증 정보가 없습니다. 다시 로그인해주세요.", type: "error" })
       setIsLoading(false)
       return
@@ -60,7 +60,7 @@ export default function ChangePassword() {
         "/api/v1/user-service/users/borrow/password",
         { currentPassword, newPassword, newPasswordConfirm },
         {
-          params: { userId: userBorrowId },
+          params: { userId: user.userBorrowId },
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${verificationToken}`

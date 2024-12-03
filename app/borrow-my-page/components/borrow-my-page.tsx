@@ -5,8 +5,6 @@ import { Button } from "@/components/button"
 import { Check } from 'lucide-react'
 import Link from "next/link"
 import { useAuth } from "@/contexts/AuthContext"
-import { useUser } from "@/contexts/UserContext"
-import { useToken } from "@/contexts/TokenContext"
 import { useRouter, useSearchParams } from 'next/navigation'
 import api from '@/utils/api'
 
@@ -33,24 +31,22 @@ export default function BorrowerMyPage({ verificationToken }: { verificationToke
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const { userType } = useAuth()
-  const { userBorrowId } = useUser()
-  const { token } = useToken()
+  const { user, userType, token } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const refresh = searchParams.get('refresh')
 
   const fetchUserData = useCallback(async () => {
-    if (!userBorrowId || !verificationToken) {
-      console.error('사용자 ID 또는 검증 토큰이 없습니다:', { userBorrowId, verificationToken })
+    if (!user?.userBorrowId || !verificationToken) {
+      console.error('사용자 ID 또는 검증 토큰이 없습니다:', { userBorrowId: user?.userBorrowId, verificationToken })
       setError('사용자 정보를 불러올 수 없습니다. 다시 로그인해주세요.')
       return
     }
 
     try {
-      console.log('사용자 정보 요청 시작:', { userBorrowId, verificationToken: verificationToken.slice(0, 10) + '...' })
+      console.log('사용자 정보 요청 시작:', { userBorrowId: user.userBorrowId, verificationToken: verificationToken.slice(0, 10) + '...' })
       const response = await api.get(`/api/v1/user-service/users/borrow/mypage`, {
-        params: { userId: userBorrowId },
+        params: { userId: user.userBorrowId },
         headers: {
           'Authorization': `Bearer ${verificationToken}`,
           'Content-Type': 'application/json'
@@ -69,11 +65,11 @@ export default function BorrowerMyPage({ verificationToken }: { verificationToke
       console.error("사용자 정보 조회 오류:", error)
       setError('사용자 정보를 불러오는데 실패했습니다. 네트워크 연결을 확인하고 다시 시도해주세요.')
     }
-  }, [userBorrowId, verificationToken])
+  }, [user?.userBorrowId, verificationToken])
 
   const fetchAccounts = useCallback(async () => {
-    if (!userBorrowId || userType !== 'borrow') {
-      console.error('사용자 인증 실패:', { userBorrowId, userType })
+    if (!user?.userBorrowId || userType !== 'borrow') {
+      console.error('사용자 인증 실패:', { userBorrowId: user?.userBorrowId, userType })
       setError('사용자 인증에 실패했습니다. 다시 로그인해주세요.')
       setIsLoading(false)
       return
@@ -87,9 +83,9 @@ export default function BorrowerMyPage({ verificationToken }: { verificationToke
     }
 
     try {
-      console.log('계좌 정보 요청 시작:', { userBorrowId, token: token.slice(0, 10) + '...' })
+      console.log('계좌 정보 요청 시작:', { userBorrowId: user.userBorrowId, token: token.slice(0, 10) + '...' })
       const response = await api.get(`/api/v1/user-service/accounts/borrow`, {
-        params: { userId: userBorrowId },
+        params: { userId: user.userBorrowId },
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -109,7 +105,7 @@ export default function BorrowerMyPage({ verificationToken }: { verificationToke
       console.error("계좌 데이터 조회 오류:", err)
       setError('계좌 데이터를 불러오는데 실패했습니다. 다시 시도해 주세요.')
     }
-  }, [userBorrowId, userType, token])
+  }, [user?.userBorrowId, userType, token])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -122,7 +118,7 @@ export default function BorrowerMyPage({ verificationToken }: { verificationToke
   }, [fetchUserData, fetchAccounts, refresh])
 
   const handleDeleteAccount = async (id: number) => {
-    if (!userBorrowId) {
+    if (!user?.userBorrowId) {
       console.error('사용자 ID가 없습니다.')
       return
     }
@@ -134,11 +130,11 @@ export default function BorrowerMyPage({ verificationToken }: { verificationToke
     }
 
     try {
-      console.log('계좌 삭제 요청 시작:', { accountId: id, userBorrowId, token: token.slice(0, 10) + '...' })
+      console.log('계좌 삭제 요청 시작:', { accountId: id, userBorrowId: user.userBorrowId, token: token.slice(0, 10) + '...' })
       const response = await api.put(`/api/v1/user_service/accounts/borrow/${id}/status`, 
         { isDeleted: true },
         {
-          params: { userId: userBorrowId },
+          params: { userId: user.userBorrowId },
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -172,7 +168,7 @@ export default function BorrowerMyPage({ verificationToken }: { verificationToke
     )
   }
 
-  if (!userInfo || userType !== 'borrow' || !userBorrowId) {
+  if (!userInfo || userType !== 'borrow' || !user?.userBorrowId) {
     return (
       <div className="text-center mt-8">
         <p>사용자 정보를 불러올 수 없습니다.</p>

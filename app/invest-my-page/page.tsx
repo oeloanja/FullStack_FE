@@ -7,15 +7,15 @@ import InvestorMyPage from "./components/invest-my-page"
 export default function Page() {
   const [verificationToken, setVerificationToken] = useState<string | null>(null)
 
-  const handleVerificationSuccess = (token: string) => {
-    sessionStorage.setItem('verificationToken', token)
-    setVerificationToken(token)
+  const handleVerificationSuccess = (newToken: string) => {
+    sessionStorage.setItem('verificationToken', newToken)
+    setVerificationToken(newToken)
   }
 
   useEffect(() => {
-    const token = sessionStorage.getItem('verificationToken')
-    if (token) {
-      setVerificationToken(token)
+    const storedToken = sessionStorage.getItem('verificationToken')
+    if (storedToken) {
+      setVerificationToken(storedToken)
     }
   }, [])
 
