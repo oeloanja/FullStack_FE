@@ -7,19 +7,18 @@
 
 `npm install @radix-ui/react-slot class-variance-authority`
 
+`npm install lucide-react`
+
 `npm i react-hot-toast`
 
 `npm i @radix-ui/react-dialog`
+
+`npm i date-fns`
 
 `npm install axios`
 
 `npm install react-hook-form`
 
-`npm install lucide-react`
-
-`npm install react@18.2.0 react-dom@18.2.0`
-
-`npm install redux react-redux @reduxjs/toolkit` 
 
 ### 실행 명령어
 
