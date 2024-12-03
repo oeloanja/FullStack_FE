@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/d
 import { useAuth } from "@/contexts/AuthContext"
 import api from '@/utils/api'
 import { toast } from 'react-hot-toast'
-import { formatNumber, parseNumber } from '@/utils/numberFormat';
+import { formatNumber, parseNumber } from '@/utils/numberFormat'
 
 interface Account {
   accountId: number
@@ -131,15 +131,6 @@ export default function RepaymentPage() {
     }
   };
 
-  const validateRepaymentAmount = (amount: string): boolean => {
-    const parsedAmount = parseNumber(amount);
-    if (requiredAmount !== null && parsedAmount > requiredAmount) {
-      toast.error("상환금을 초과하여 입금할 수 없습니다! 다시 입력해주세요.");
-      return false;
-    }
-    return true;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -153,13 +144,20 @@ export default function RepaymentPage() {
       return;
     }
 
-    if (!repaymentAmount || parseNumber(repaymentAmount) <= 0) {
+    if (!repaymentAmount) {
       toast.error('올바른 상환 금액을 입력해주세요.');
       return;
     }
 
-    // 최종 검증 단계 추가
-    if (!validateRepaymentAmount(repaymentAmount)) {
+    const amount = parseNumber(repaymentAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast.error('올바른 상환 금액을 입력해주세요.');
+      return;
+    }
+
+    // Add validation for repayment amount
+    if (requiredAmount !== null && amount > requiredAmount) {
+      alert("이번 회차에 갚아야 할 금액 이상으로 입력하셨습니다! 다시 입력해주세요");
       return;
     }
 
@@ -174,7 +172,7 @@ export default function RepaymentPage() {
         '/api/v1/repayment-service/create/repayment-process',
         {
           loanId: loanId,
-          actualRepaymentAmount: parseNumber(repaymentAmount)
+          actualRepaymentAmount: amount
         },
         {
           headers: {
@@ -226,10 +224,13 @@ export default function RepaymentPage() {
               placeholder="상환금 입력"
               value={repaymentAmount}
               onChange={(e) => {
-                const formatted = formatNumber(e.target.value);
-                if (validateRepaymentAmount(formatted)) {
-                  setRepaymentAmount(formatted);
+                const value = e.target.value;
+                if (value === '') {
+                  setRepaymentAmount('');
+                  return;
                 }
+                const formatted = formatNumber(value);
+                setRepaymentAmount(formatted);
               }}
               className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md text-lg"
             />

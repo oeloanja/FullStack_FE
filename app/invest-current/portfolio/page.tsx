@@ -127,7 +127,7 @@ export default function PortfolioPage() {
           <div>
             <p className="text-sm text-gray-500">평균 수익률</p>
             <p className="text-xl font-bold text-[#23E2C2]">
-              {portfolio?.totalReturnRate.toFixed(1)}%
+              {portfolio?.totalReturnRate.toFixed(2)}%
             </p>
           </div>
           <div>
@@ -190,8 +190,8 @@ export default function PortfolioPage() {
                   <td className="py-4 px-4 text-center">{investment.groupName}</td>
                   <td className="py-4 px-4 text-center">{investment.amount.toLocaleString()}원</td>
                   <td className="py-4 px-4 text-center">{investment.grade}</td>
-                  <td className="py-4 px-4 text-center">{investment.expectedRate?.toFixed(1) ?? 0}%</td>
-                  <td className="py-4 px-4 text-center">{investment.actualRate?.toFixed(1) ?? 0}%</td>
+                  <td className="py-4 px-4 text-center">{investment.expectedRate?.toFixed(2) ?? 0}%</td>
+                  <td className="py-4 px-4 text-center">{investment.actualRate?.toFixed(2) ?? 0}%</td>
                   <td className="py-4 px-4 text-center">
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       investment.status === '투자 중' ? 'bg-green-100 text-green-800' :

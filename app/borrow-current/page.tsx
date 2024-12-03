@@ -139,7 +139,13 @@ export default function CurrentLoanStatus() {
       });
 
       if (response.data) {
-        setRepayments(response.data);
+        // Ensure we're correctly mapping the isRepaymentSuccess property
+        setRepayments(response.data.map((repayment: any) => ({
+          repaymentTimes: repayment.repaymentTimes,
+          paymentDate: repayment.paymentDate,
+          repaymentAmount: repayment.repaymentAmount,
+          isRepaymentSuccess: repayment.repaymentSuccess // Changed from repayment.isRepaymentSuccess
+        })));
       }
     } catch (error) {
       console.error('상환 내역 조회 중 오류 발생:', error);
