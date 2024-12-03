@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Button } from "@/components/button"
 import { Card } from "@/components/card"
+import Link from "next/link"
 
 const images = [
   '/invest-detail1.png',
@@ -45,10 +46,11 @@ export default function Component() {
             ))}
           </div>
         </Card>
-        
+        <Link href="../auth/signup/invest">
         <Button className="bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-full px-8 py-6 text-lg">
           회원가입 하고 투자 시작하기
         </Button>
+        </Link>
       </section>
       
       {/* Features Grid */}
