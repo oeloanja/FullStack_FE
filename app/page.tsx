@@ -39,9 +39,23 @@ export default function Home() {
       </section>
 
       {/* Partners */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex justify-center gap-4 sm:gap-8">
-        <div className="h-6 sm:h-8 w-20 sm:w-24 bg-gray-100 rounded" />
-        <div className="h-6 sm:h-8 w-20 sm:w-24 bg-gray-100 rounded" />
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex justify-center items-center gap-8 sm:gap-12">
+        <div className="relative h-8 sm:h-12 w-24 sm:w-32">
+          <Image
+            src="/TossBank-Logo.png"
+            alt="Toss Logo"
+            fill
+            className="object-contain"
+          />
+        </div>
+        <div className="relative h-8 sm:h-14 w-24 sm:w-32">
+          <Image
+            src="/HK-Logo.png"
+            alt="HK Logo"
+            fill
+            className="object-contain "
+          />
+        </div>
       </section>
 
       {/* Features Grid */}

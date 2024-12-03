@@ -1,8 +1,26 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { Button } from "@/components/button"
 import { Card } from "@/components/card"
-//import { MessageCircle } from 'lucide-react'
+
+const images = [
+  '/invest-detail1.png',
+  '/invest-detail2.png', 
+  '/invest-detail3.png'
+]
 
 export default function Component() {
+  const [currentImage, setCurrentImage] = useState(0)
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentImage((prev) => (prev + 1) % images.length)
+    }, 3000)
+
+    return () => clearInterval(timer)
+  }, [])
   return (
     <div className="flex-1">
       {/* Hero Section */}
@@ -11,8 +29,21 @@ export default function Component() {
           은행보다, <span className="text-[#23E2C2]">BilliT</span>
         </h1>
         
-        <Card className="max-w-2xl mx-auto p-8 relative mb-8">
-          <div className="w-full aspect-video  bg-gray-200 rounded-lg" /> {/* Placeholder for image */}
+        <Card className="max-w-3xl mx-auto p-8 relative mb-8">
+          <div className="w-full aspect-video relative border bg-white rounded-2xl overflow-hidden">
+            {images.map((src, index) => (
+              <Image
+                key={src}
+                src={src}
+                alt={`슬라이드 ${index + 1}`}
+                fill
+                className={`object-contain transition-opacity duration-500  ${
+                  currentImage === index ? 'opacity-100' : 'opacity-0'
+                }`}
+                priority={index === 0}
+              />
+            ))}
+          </div>
         </Card>
         
         <Button className="bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-full px-8 py-6 text-lg">
