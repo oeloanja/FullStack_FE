@@ -206,7 +206,7 @@ export default function RepaymentPage() {
               상환금
             </label>
             {requiredAmount !== null && (
-              <div className="mb-2 text-sm text-gray-600">
+              <div className="mb-2 text-gray-600">
                 이번 회차에 갚아야 할 금액: {formatNumber(requiredAmount)}원
               </div>
             )}
