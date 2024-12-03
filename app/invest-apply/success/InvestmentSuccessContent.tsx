@@ -6,7 +6,7 @@ import { Button } from "@/components/button"
 import { CheckCircle } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import api from '@/utils/api'
-import { getToken } from '@/utils/auth'
+import { useAuth } from "@/contexts/AuthContext"
 
 interface InvestmentData {
   investments: Array<{
@@ -23,6 +23,7 @@ export default function InvestmentSuccessContent() {
   const router = useRouter()
   const [investmentData, setInvestmentData] = useState<InvestmentData | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const { token } = useAuth()
 
   useEffect(() => {
     const storedData = localStorage.getItem('selectedInvestments')
@@ -49,7 +50,6 @@ export default function InvestmentSuccessContent() {
     setIsLoading(true)
 
     try {
-      const token = getToken()
       if (!token) {
         throw new Error('인증 토큰이 없습니다.')
       }
@@ -80,26 +80,28 @@ export default function InvestmentSuccessContent() {
     }
   }
 
+  const handleCancel = () => {
+    localStorage.removeItem('selectedInvestments')
+    localStorage.removeItem('investApplicationData')
+    router.push('/')
+  }
+
+  if (!investmentData) {
+    return null
+  }
+
   return (
     <div className="border shadow-sm bg-white rounded-2xl p-6 max-w-md w-full text-center">
       <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-6" />
       <h1 className="text-3xl font-bold text-gray-800 mb-4">투자 신청 완료!</h1>
       <p className="text-gray-600 mb-6">
-        투자 신청이 완료되었습니다.<br/> 확정 버튼을 눌러 투자를 진행하세요.
+        아래 내용을 확인하시고 투자를 확정해 주세요.
       </p>
-      {investmentData && (
-        <div className="bg-gray-100 rounded-lg p-4 mb-6">
-          <h2 className="text-lg font-semibold text-gray-700 mb-2">투자 내역</h2>
-          <p className="text-gray-600">총 투자 금액: {formatCurrency(investmentData.totalAmount)}</p>
-          <ul className="mt-2">
-            {investmentData.investments.map((inv, index) => (
-              <li key={index} className="text-sm text-gray-600">
-                그룹 {inv.groupId}: {formatCurrency(inv.investmentAmount)} (예상 수익률: <a className='text-[#23E2C2] font-bold'>{inv.expectedReturnRate.toFixed(2)}%</a>)
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <div className="bg-gray-100 rounded-lg p-4 mb-6">
+        <h2 className="text-lg font-semibold text-gray-700 mb-2">투자 내역</h2>
+        <p className="text-gray-600">총 투자 금액: {formatCurrency(investmentData.totalAmount)}</p>
+        <p className="text-gray-600">투자 그룹 수: {investmentData.investments.length}개</p>
+      </div>
       <div className="space-y-4">
         <Button
           onClick={handleConfirmInvestment}
@@ -107,6 +109,13 @@ export default function InvestmentSuccessContent() {
           disabled={isLoading}
         >
           {isLoading ? '처리 중...' : '투자 확정하기'}
+        </Button>
+        <Button
+          onClick={handleCancel}
+          variant="outline"
+          className="w-full border-[#23E2C2] text-[#23E2C2] hover:bg-[#23E2C2]/10"
+        >
+          취소
         </Button>
       </div>
     </div>

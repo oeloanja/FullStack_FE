@@ -4,9 +4,8 @@ import { useState, useEffect } from "react"
 import { useRouter } from 'next/navigation'
 import { Button } from "@/components/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/dialog"
-import { useUser } from "@/contexts/UserContext"
+import { useAuth } from "@/contexts/AuthContext"
 import api from '@/utils/api'
-import { getToken } from '@/utils/auth'
 import { toast } from 'react-hot-toast'
 import { formatNumber, parseNumber } from '@/utils/numberFormat';
 
@@ -24,16 +23,16 @@ export default function RepaymentPage() {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const { userBorrowId } = useUser()
+  const { user, token } = useAuth()
   const [loanId, setLoanId] = useState<number | null>(null)
   const [requiredAmount, setRequiredAmount] = useState<number | null>(null)
 
   useEffect(() => {
     const fetchCurrentLoan = async () => {
       try {
-        if (!userBorrowId) return;
+        if (!user?.userBorrowId) return;
         
-        const response = await api.get(`/api/v1/loan-service/history/${userBorrowId}/filter`, {
+        const response = await api.get(`/api/v1/loan-service/history/${user?.userBorrowId}/filter`, {
           params: { loanStatus: 1 },
           headers: {
             'Content-Type': 'application/json'
@@ -53,14 +52,13 @@ export default function RepaymentPage() {
     };
 
     fetchCurrentLoan();
-  }, [userBorrowId, router]);
+  }, [user?.userBorrowId, router]);
 
   useEffect(() => {
     const fetchRepaymentAmount = async () => {
       if (!loanId) return;
     
       try {
-        const token = getToken();
         if (!token) return;
 
         const response = await api.get(`/api/v1/repayment-service`, {
@@ -83,10 +81,9 @@ export default function RepaymentPage() {
     };
 
     fetchRepaymentAmount();
-  }, [loanId]);
+  }, [loanId, token]);
 
   const fetchAccounts = async () => {
-    const token = getToken()
     if (!token) {
       setError('인증 토큰이 없습니다. 다시 로그인해주세요.')
       toast.error('인증 토큰이 없습니다. 다시 로그인해주세요.')
@@ -95,7 +92,7 @@ export default function RepaymentPage() {
 
     try {
       const response = await api.get(`/api/v1/user-service/accounts/borrow`, {
-        params: { userId: userBorrowId },
+        params: { userId: user?.userBorrowId },
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -134,6 +131,15 @@ export default function RepaymentPage() {
     }
   };
 
+  const validateRepaymentAmount = (amount: string): boolean => {
+    const parsedAmount = parseNumber(amount);
+    if (requiredAmount !== null && parsedAmount > requiredAmount) {
+      toast.error("상환금을 초과하여 입금할 수 없습니다! 다시 입력해주세요.");
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -152,10 +158,14 @@ export default function RepaymentPage() {
       return;
     }
 
+    // 최종 검증 단계 추가
+    if (!validateRepaymentAmount(repaymentAmount)) {
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const token = getToken();
       if (!token) {
         throw new Error('인증 토큰이 없습니다.');
       }
@@ -217,7 +227,9 @@ export default function RepaymentPage() {
               value={repaymentAmount}
               onChange={(e) => {
                 const formatted = formatNumber(e.target.value);
-                setRepaymentAmount(formatted);
+                if (validateRepaymentAmount(formatted)) {
+                  setRepaymentAmount(formatted);
+                }
               }}
               className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md text-lg"
             />

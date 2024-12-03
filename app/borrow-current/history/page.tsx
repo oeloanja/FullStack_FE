@@ -3,10 +3,8 @@
 import { useState, useEffect } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { Button } from "@/components/button"
-import { useUser } from "@/contexts/UserContext"
+import { useAuth } from "@/contexts/AuthContext"
 import api from '@/utils/api'
-import { useToken } from '@/contexts/TokenContext'
-import { useRouter } from 'next/navigation'
 
 interface LoanResponseDto {
   loanId: number
@@ -51,23 +49,21 @@ const getLoanStatusColor = (statusType: LoanStatusType): string => {
 }
 
 export default function LoanHistoryPage() {
-  const { userBorrowId } = useUser()
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [selectedFilter, setSelectedFilter] = useState<string>('전체보기')
   const [loanHistory, setLoanHistory] = useState<LoanResponseDto[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const { token } = useToken()
-  const router = useRouter()
+  const { user, token } = useAuth()
 
   useEffect(() => {
     const fetchLoanHistory = async () => {
       setIsLoading(true)
       try {
-        if (!userBorrowId) {
+        if (!user?.userBorrowId) {
           throw new Error('사용자 ID를 찾을 수 없습니다')
         }
-        const response = await api.get(`/api/v1/loan-service/history/${userBorrowId}`, {
+        const response = await api.get(`/api/v1/loan-service/history/${user.userBorrowId}`, {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
@@ -83,10 +79,10 @@ export default function LoanHistoryPage() {
       }
     }
 
-    if (userBorrowId) {
+    if (user?.userBorrowId) {
       fetchLoanHistory()
     }
-  }, [userBorrowId, token])
+  }, [user?.userBorrowId, token])
 
   const formatLoanPeriod = (createdAt: string, term: number) => {
     const date = new Date(createdAt)
@@ -107,7 +103,7 @@ export default function LoanHistoryPage() {
 
   if (isLoading) return <div className="p-4">로딩 중...</div>
   if (error) return <div className="p-4 text-red-500">오류: {error}</div>
-  if (!userBorrowId) return <div className="p-4">사용자 정보를 찾을 수 없습니다.</div>
+  if (!user?.userBorrowId) return <div className="p-4">사용자 정보를 찾을 수 없습니다.</div>
 
   return (
     <div className="flex flex-col space-y-4 p-4">
@@ -190,3 +186,4 @@ export default function LoanHistoryPage() {
     </div>
   )
 }
+

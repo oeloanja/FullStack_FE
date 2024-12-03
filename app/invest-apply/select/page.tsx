@@ -5,7 +5,7 @@ import { Button } from "@/components/button"
 import { ArrowUpDown } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import api from '@/utils/api'
-import { getToken } from '@/utils/auth'
+import { useAuth } from "@/contexts/AuthContext"
 import { toast } from 'react-hot-toast'
 import { formatNumber, parseNumber } from '@/utils/numberFormat'
 
@@ -24,6 +24,7 @@ export default function InvestmentSelection() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
+  const { token } = useAuth()
 
   useEffect(() => {
     const fetchInvestments = async () => {
@@ -39,9 +40,9 @@ export default function InvestmentSelection() {
         const { riskLevel } = JSON.parse(investData)
         const riskLevelOrdinal = getRiskLevelOrdinal(riskLevel)
 
-        const token = getToken()
         if (!token) {
           toast.error('인증 토큰이 없습니다. 다시 로그인해주세요.')
+          router.push('/login')
           return
         }
 
@@ -65,7 +66,7 @@ export default function InvestmentSelection() {
     }
 
     fetchInvestments()
-  }, [router])
+  }, [router, token])
 
   const handleAmountChange = (id: number, value: string) => {
     const formattedValue = formatNumber(value)
@@ -103,9 +104,9 @@ export default function InvestmentSelection() {
   const handleSubmit = async () => {
     setIsSubmitting(true)
     try {
-      const token = getToken()
       if (!token) {
         toast.error('인증 토큰이 없습니다. 다시 로그인해주세요.')
+        router.push('/login')
         return
       }
 
@@ -132,7 +133,6 @@ export default function InvestmentSelection() {
         return
       }
 
-      // Store the investment data in localStorage
       localStorage.setItem('selectedInvestments', JSON.stringify({
         investments: selectedInvestments,
         totalAmount: selectedInvestments.reduce((sum, inv) => sum + inv.investmentAmount, 0)

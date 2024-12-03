@@ -5,11 +5,10 @@ import { Button } from "@/components/button"
 import { Upload } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useForm, Controller } from "react-hook-form"
-import { useUser } from "@/contexts/UserContext"
+import { useAuth } from "@/contexts/AuthContext"
 import api from '@/utils/api'
 import { toast } from 'react-hot-toast'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/dialog"
-import { getToken } from '@/utils/auth'
 import Script from 'next/script'
 import { formatNumber, parseNumber } from '@/utils/numberFormat';
 
@@ -27,7 +26,7 @@ declare global {
 
 export default function LoanApplicationForm() {
   const router = useRouter()
-  const { userBorrowId } = useUser()
+  const { user, token } = useAuth()
   const incomeFileInputRef = useRef<HTMLInputElement>(null)
   const employmentFileInputRef = useRef<HTMLInputElement>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -72,7 +71,7 @@ export default function LoanApplicationForm() {
       return;
     }
 
-    if (!userBorrowId) {
+    if (!user?.userBorrowId) {
       toast.error('사용자 정보를 찾을 수 없습니다.');
       setIsSubmitting(false);
       return;
@@ -90,7 +89,7 @@ export default function LoanApplicationForm() {
 
     // 대출 신청 데이터 준비
     const loanApplicationData = {
-      userBorrowId: userBorrowId,
+      userBorrowId: user.userBorrowId,
       accountBorrowId: selectedAccountId,
       loanAmount: loanAmount,
       term: termInMonths
@@ -116,7 +115,6 @@ export default function LoanApplicationForm() {
   }
 
   const fetchAccounts = async () => {
-    const token = getToken()
     if (!token) {
       setError('인증 토큰이 없습니다. 다시 로그인해주세요.')
       toast.error('인증 토큰이 없습니다. 다시 로그인해주세요.')
@@ -125,7 +123,7 @@ export default function LoanApplicationForm() {
 
     try {
       const response = await api.get(`/api/v1/user-service/accounts/borrow`, {
-        params: { userId: userBorrowId },
+        params: { userId: user?.userBorrowId },
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`

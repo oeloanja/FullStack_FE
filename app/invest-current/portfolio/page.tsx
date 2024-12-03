@@ -4,14 +4,13 @@ import { useState, useEffect } from 'react'
 import { Button } from "@/components/button"
 import { ChevronDown } from 'lucide-react'
 import Link from 'next/link'
-import { useUser } from "@/contexts/UserContext"
+import { useAuth } from "@/contexts/AuthContext"
 import api from '@/utils/api'
-import { getToken } from '@/utils/auth'
 import { toast } from 'react-hot-toast'
 import type { Investment, InvestmentPortfolio, InvestmentResponse } from '@/types/portfolio'
 
 export default function PortfolioPage() {
-  const { userInvestId } = useUser()
+  const { user, token } = useAuth()
   const [investments, setInvestments] = useState<Investment[]>([])
   const [portfolio, setPortfolio] = useState<InvestmentPortfolio | null>(null)
   const [selectedFilter, setSelectedFilter] = useState<'전체보기' | '투자 중' | '상환 완료' | '투자 대기'>('전체보기')
@@ -28,22 +27,37 @@ export default function PortfolioPage() {
     }
   }
 
+  const calculateTotalInvestedAmount = () => {
+    return investments
+      .filter(inv => inv.status === '투자 중')
+      .reduce((total, inv) => total + inv.amount, 0);
+  };
+
   const fetchData = async () => {
     try {
-      const token = getToken()
-      if (!token || !userInvestId) {
+      if (!token || !user?.userInvestId) {
         toast.error('로그인이 필요합니다.')
         return
       }
 
       // Fetch portfolio data
       const portfolioResponse = await api.get<InvestmentPortfolio>(
-        `/api/v1/invest-service/portfolios/${userInvestId}`
+        `/api/v1/invest-service/portfolios/${user.userInvestId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
       )
 
       // Fetch investments data
       const investmentsResponse = await api.get<InvestmentResponse[]>(
-        `/api/v1/invest-service/investments/list?userInvestorId=${userInvestId}`
+        `/api/v1/invest-service/investments/list?userInvestorId=${user.userInvestId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
       )
 
       if (portfolioResponse.data) {
@@ -75,14 +89,14 @@ export default function PortfolioPage() {
   }
 
   useEffect(() => {
-    if (!userInvestId) {
+    if (!user?.userInvestId) {
       console.error('사용자 ID가 없습니다.')
       toast.error('사용자 정보를 찾을 수 없습니다.')
       return
     }
     
     fetchData()
-  }, [userInvestId])
+  }, [user?.userInvestId, token])
 
   const filteredInvestments = selectedFilter === '전체보기' 
     ? investments 
@@ -101,13 +115,13 @@ export default function PortfolioPage() {
           <div>
             <p className="text-sm text-gray-500">총 투자금액</p>
             <p className="text-xl font-bold">
-              {portfolio?.totalInvestedAmount.toLocaleString()}원
+              {calculateTotalInvestedAmount().toLocaleString()}원
             </p>
           </div>
           <div>
             <p className="text-sm text-gray-500">진행중인 투자</p>
             <p className="text-xl font-bold">
-              {investments.filter(inv => inv.status === '투자 중').length}건
+              {investments.filter(inv => inv.status === '투자 중').length.toLocaleString()}건
             </p>
           </div>
           <div>
@@ -188,7 +202,7 @@ export default function PortfolioPage() {
                     </span>
                   </td>
                   <td className="py-4 px-4">
-                    <Link href={`/invest-current/portfolio/detail/${investment.id}`}>
+                    <Link href={`/invest-current/portfolio/detail?id=${investment.id}`}>
                       <Button
                         size="sm"
                         className="bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white"

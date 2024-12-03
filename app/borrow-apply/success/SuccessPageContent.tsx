@@ -6,7 +6,7 @@ import { Button } from "@/components/button"
 import { CheckCircle } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import api from '@/utils/api'
-import { getToken } from '@/utils/auth'
+import { useAuth } from "@/contexts/AuthContext"
 import axios from 'axios'
 
 interface LoanData {
@@ -23,6 +23,7 @@ export default function SuccessPageContent() {
   const router = useRouter()
   const [loanData, setLoanData] = useState<LoanData | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const { token } = useAuth()
 
   useEffect(() => {
     const storedData = localStorage.getItem('loanApplicationData')
@@ -50,7 +51,6 @@ export default function SuccessPageContent() {
     setIsLoading(true)
 
     try {
-      const token = getToken()
       if (!token) {
         throw new Error('인증 토큰이 없습니다.')
       }
@@ -106,7 +106,6 @@ export default function SuccessPageContent() {
     setIsLoading(true)
 
     try {
-      const token = getToken()
       if (!token) {
         throw new Error('인증 토큰이 없습니다.')
       }
@@ -136,13 +135,10 @@ export default function SuccessPageContent() {
       console.error('대출 취소 중 오류 발생:', error)
       if (axios.isAxiosError(error)) {
         if (error.response) {
-          // 서버가 2xx 범위를 벗어나는 상태 코드로 응답한 경우
           toast.error(`대출 취소 실패: ${error.response.data.message || '알 수 없는 오류가 발생했습니다.'}`)
         } else if (error.request) {
-          // 요청이 이루어졌으나 응답을 받지 못한 경우
           toast.error('서버로부터 응답이 없습니다. 네트워크 연결을 확인해 주세요.')
         } else {
-          // 요청을 설정하는 중에 문제가 발생한 경우
           toast.error('대출 취소 요청 중 오류가 발생했습니다.')
         }
       } else {

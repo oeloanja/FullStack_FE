@@ -3,21 +3,21 @@
 import { useRef, useState } from "react"
 import { useRouter } from 'next/navigation'
 import api from '@/utils/api'
-import { useUser } from "@/contexts/UserContext"
+import { useAuth } from "@/contexts/AuthContext"
 import { toast } from 'react-hot-toast'
 import { formatNumber, parseNumber } from '@/utils/numberFormat'
 
 export default function LoanConfirmationForm({ period }: { period: number }) {
   const router = useRouter()
   const loanAmountRef = useRef<HTMLInputElement>(null)
-  const { userBorrowId } = useUser()
+  const { user, token } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const loanAmount = loanAmountRef.current?.value;
 
-    if (!userBorrowId) {
+    if (!user?.userBorrowId) {
       console.error('사용자 ID를 찾을 수 없습니다.');
       toast.error('로그인 정보를 확인할 수 없습니다. 다시 로그인해 주세요.');
       return;
@@ -32,7 +32,7 @@ export default function LoanConfirmationForm({ period }: { period: number }) {
     const loanAmountInWon = parseNumber(loanAmount);
 
     const loanRequestData = {
-      userBorrowId: userBorrowId,
+      userBorrowId: user.userBorrowId,
       accountBorrowId: parseInt(localStorage.getItem('selectedAccountId') || '0'),
       loanAmount: loanAmountInWon,
       term: period
@@ -47,7 +47,6 @@ export default function LoanConfirmationForm({ period }: { period: number }) {
     setIsLoading(true);
 
     try {
-      const token = getToken();
       if (!token) {
         toast.error('인증 토큰이 없습니다. 다시 로그인해주세요.');
         return;
@@ -60,14 +59,12 @@ export default function LoanConfirmationForm({ period }: { period: number }) {
         }
       });
 
-      console.log('API 응답:', response.data); // 응답 데이터 확인
+      console.log('API 응답:', response.data);
 
       if (response.data && response.data.loanId) {
-        // loanId를 로컬 스토리지에 저장
         localStorage.setItem('loanId', response.data.loanId.toString());
         console.log('저장된 loanId:', response.data.loanId);
         
-        // 대출 금액을 로컬 스토리지에 저장
         const updatedLoanData = {
           ...JSON.parse(localStorage.getItem('loanApplicationData') || '{}'),
           loanAmount: loanAmountInWon,
@@ -117,10 +114,5 @@ export default function LoanConfirmationForm({ period }: { period: number }) {
       </p>
     </form>
   )
-}
-
-function getToken() {
-  // 토큰 가져오는 로직 추가
-  return localStorage.getItem('token');
 }
 

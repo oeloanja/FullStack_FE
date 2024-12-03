@@ -6,7 +6,7 @@ import { Button } from "@/components/button"
 import api from '@/utils/api'
 import { format, addMonths } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import { getToken } from '@/utils/auth'
+import { useAuth } from "@/contexts/AuthContext";
 
 interface LoanDetail {
   loanId: number;
@@ -40,12 +40,13 @@ interface Repayment {
 }
 
 export default function CurrentLoanStatus() {
+  const { user, token } = useAuth();
+  const userBorrowId = user?.userBorrowId;
   const [loanDetail, setLoanDetail] = useState<LoanDetail | null>(null);
   const [repayments, setRepayments] = useState<RepaymentDetail[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [repaymentInfo, setRepaymentInfo] = useState<Repayment | null>(null);
-  const userBorrowId = localStorage.getItem('userBorrowId');
 
   const formatDate = (dateString: string | null) => {
     try {
@@ -92,10 +93,10 @@ export default function CurrentLoanStatus() {
     }
   };
 
-  const calculateNextPaymentDate = (createdAt: string | null, dueDate: number | null) => {
+  const calculateNextPaymentDate = (createdAt: string | null) => {
     try {
-      if (!createdAt || !dueDate) {
-        console.log('Missing required data:', { createdAt, dueDate });
+      if (!createdAt) {
+        console.log('Missing required data:', { createdAt });
         return null;
       }
 
@@ -108,11 +109,11 @@ export default function CurrentLoanStatus() {
         return null;
       }
 
-      // 첫 납부일: created_at + due_date
-      let nextPaymentDate = new Date(createdDate);
-      nextPaymentDate.setDate(nextPaymentDate.getDate() + dueDate);
+      // Set next payment date to one month after the created date
+      const nextPaymentDate = new Date(createdDate);
+      nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
 
-      // 현재 날짜가 다음 납부일을 지났다면, 다음 달의 같은 날짜로 설정
+      // If the current date is past the next payment date, move to the next month
       const currentDate = new Date();
       while (currentDate > nextPaymentDate) {
         nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
@@ -127,7 +128,6 @@ export default function CurrentLoanStatus() {
 
   const fetchRepayments = async (loanId: number) => {
     try {
-      const token = getToken();
       if (!token) {
         throw new Error('인증 토큰이 없습니다.');
       }
@@ -149,7 +149,6 @@ export default function CurrentLoanStatus() {
 
   const fetchRepaymentInfo = async (loanId: number) => {
     try {
-      const token = getToken();
       if (!token) {
         throw new Error('인증 토큰이 없습니다.');
       }
@@ -177,13 +176,16 @@ export default function CurrentLoanStatus() {
     const fetchLoanDetail = async () => {
       setIsLoading(true);
       try {
-        if (!userBorrowId) {
-          throw new Error('User borrow ID is not available');
+        if (!userBorrowId || !token) {
+          setError('사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.');
+          setIsLoading(false);
+          return;
         }
         const response = await api.get(`/api/v1/loan-service/history/${userBorrowId}/filter`, {
           params: { loanStatus: 1 },
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           }
         });
         
@@ -204,7 +206,7 @@ export default function CurrentLoanStatus() {
     };
 
     fetchLoanDetail();
-  }, [userBorrowId]);
+  }, [userBorrowId, token]);
 
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
@@ -270,9 +272,9 @@ export default function CurrentLoanStatus() {
                   <div className="flex justify-between">
                     <span className="text-gray-500">다음 납부일</span>
                     <span className="font-medium">
-                      {repaymentInfo && repaymentInfo.createdAt && repaymentInfo.dueDate ? 
+                      {repaymentInfo && repaymentInfo.createdAt ? 
                         (() => {
-                          const nextDate = calculateNextPaymentDate(repaymentInfo.createdAt, repaymentInfo.dueDate);
+                          const nextDate = calculateNextPaymentDate(repaymentInfo.createdAt);
                           return nextDate ? formatDate(nextDate.toISOString()) : '날짜 정보 없음';
                         })()
                         : '날짜 정보 없음'}
@@ -299,34 +301,40 @@ export default function CurrentLoanStatus() {
         {loanDetail && (
           <div className="border shadow-sm rounded-2xl bg-white p-6">
             <h2 className="text-xl font-bold mb-6">상환 내역</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="text-gray-500 text-sm border-b-2">
-                    <th className="text-left pb-4">회차</th>
-                    <th className="text-left pb-4">상환일</th>
-                    <th className="text-right pb-4">상환금액</th>
-                    <th className="text-right pb-4">상환상태</th>
-                  </tr>
-                </thead>
-                <tbody className="text-sm border-b-2">
-                  {repayments.map((repayment) => (
-                    <tr key={repayment.repaymentTimes} className="border-b last:border-b-0">
-                      <td className="py-4">{repayment.repaymentTimes}회차</td>
-                      <td>{formatDate(repayment.paymentDate)}</td>
-                      <td className="text-right">{repayment.repaymentAmount.toLocaleString()}원</td>
-                      <td className="text-right">
-                        <span className={`${
-                          repayment.isRepaymentSuccess ? 'text-[#23E2C2]' : 'text-red-500'
-                        }`}>
-                          {repayment.isRepaymentSuccess ? '상환완료' : '상환실패'}
-                        </span>
-                      </td>
+            {repayments.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="text-gray-500 text-sm border-b-2">
+                      <th className="text-left pb-4">회차</th>
+                      <th className="text-left pb-4">상환일</th>
+                      <th className="text-right pb-4">상환금액</th>
+                      <th className="text-right pb-4">상환상태</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="text-sm border-b-2">
+                    {repayments.map((repayment) => (
+                      <tr key={repayment.repaymentTimes} className="border-b last:border-b-0">
+                        <td className="py-4">{repayment.repaymentTimes}회차</td>
+                        <td>{formatDate(repayment.paymentDate)}</td>
+                        <td className="text-right">{repayment.repaymentAmount.toLocaleString()}원</td>
+                        <td className="text-right">
+                          <span className={`${
+                            repayment.isRepaymentSuccess ? 'text-[#23E2C2]' : 'text-red-500'
+                          }`}>
+                            {repayment.isRepaymentSuccess ? '상환완료' : '상환실패'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                현재 상환 기록이 없습니다.
+              </div>
+            )}
           </div>
         )}
       </main>

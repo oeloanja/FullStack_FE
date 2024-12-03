@@ -3,11 +3,10 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/button"
 import { ChevronDown } from 'lucide-react'
-import { useUser } from "@/contexts/UserContext"
+import { useAuth } from "@/contexts/AuthContext"
 import api from '@/utils/api'
 import { toast } from 'react-hot-toast'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/dialog"
-import { getToken } from '@/utils/auth'
 import { useRouter } from 'next/navigation'
 
 interface Account {
@@ -23,22 +22,22 @@ export default function InvestApplicationForm() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [accounts, setAccounts] = useState<Account[]>([])
   const [error, setError] = useState<string | null>(null)
-  const { userInvestId } = useUser()
+  const { user, token } = useAuth()
   const router = useRouter()
 
   const riskLevels = ["높음", "중간", "낮음"]
 
   const fetchAccounts = async () => {
-    const token = getToken()
     if (!token) {
       setError('인증 토큰이 없습니다. 다시 로그인해주세요.')
       toast.error('인증 토큰이 없습니다. 다시 로그인해주세요.')
+      router.push('/login')
       return
     }
 
     try {
       const response = await api.get(`/api/v1/user-service/accounts/invest`, {
-        params: { userId: userInvestId },
+        params: { userId: user?.userInvestId },
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -90,20 +89,18 @@ export default function InvestApplicationForm() {
       return;
     }
 
-    if (!userInvestId) {
+    if (!user?.userInvestId) {
       toast.error('사용자 정보를 찾을 수 없습니다.');
       return;
     }
 
-    // 투자 신청 데이터를 로컬 스토리지에 저장
     const investApplicationData = {
-      userInvestId: userInvestId,
+      userInvestId: user.userInvestId,
       accountInvestId: selectedAccount.accountId,
       riskLevel: selectedRiskLevel
     };
     localStorage.setItem('investApplicationData', JSON.stringify(investApplicationData));
 
-    // 투자 상품 조회 페이지로 이동
     router.push('/invest-apply/select');
   };
 
