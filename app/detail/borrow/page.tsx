@@ -57,7 +57,14 @@ export default function Component() {
       {/* Features Grid */}
       <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 space-y-8 bg-[#F7F7F7]">
         <Card className="p-4 sm:p-6 flex flex-col md:flex-row items-center gap-4 sm:gap-6">
-          <div className="md:w-1/2 aspect-video bg-gray-100 rounded-lg" />
+          <div className="md:w-1/2 aspect-video relative rounded-lg overflow-hidden">
+            <Image
+              src="/borrow-detail5.png"
+              alt="AI와 금융의 만남"
+              fill
+              className="object-cover"
+            />
+          </div>
           <div className="md:w-1/2 space-y-2 sm:space-y-4 text-center md:text-left">
             <h3 className="text-xl sm:text-2xl font-bold">AI와 금융의 만남, <br className="sm:hidden" />손쉬운 신용 산정 </h3>
             <p className="text-sm sm:text-base text-gray-600">
@@ -70,7 +77,14 @@ export default function Component() {
         </Card>
 
         <Card className="p-4 sm:p-6 flex flex-col md:flex-row-reverse items-center gap-4 sm:gap-6">
-          <div className="md:w-1/2 aspect-video bg-gray-100 rounded-lg" />
+          <div className="md:w-1/2 aspect-video relative rounded-lg overflow-hidden">
+            <Image
+              src="/borrow-detail4.png"
+              alt="합리적인 대출 금리"
+              fill
+              className="object-cover"
+            />
+          </div>
           <div className="md:w-1/2 space-y-2 sm:space-y-4 text-center md:text-left">
             <h3 className="text-xl sm:text-2xl font-bold">합리적인 대출 금리</h3>
             <p className="text-sm sm:text-base text-gray-600">
