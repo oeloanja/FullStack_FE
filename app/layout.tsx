@@ -5,6 +5,7 @@ import { UserProvider } from '../contexts/UserContext'
 import localFont from 'next/font/local'
 import "./globals.css"
 import { AuthProvider } from "@/contexts/AuthContext"
+import { ChatBot } from '@/components/chat-bot'
 
 export const metadata: Metadata = {
   title: "BilliT - 외국인을 위한 금융",
@@ -35,6 +36,7 @@ export default function RootLayout({
             <main className="flex-1 w-full">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {children}
+                <ChatBot />
               </div>
             </main>
             <Footer />
