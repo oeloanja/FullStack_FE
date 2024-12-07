@@ -4,12 +4,12 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '@/utils/api';
 
 interface User {
-  id: number;
+  id: string;
   email: string;
   userName: string;
   phone: string;
-  userBorrowId?: number;
-  userInvestId?: number;
+  userBorrowId?: string;
+  userInvestId?: string;
 }
 
 interface AuthContextType {

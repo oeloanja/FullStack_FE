@@ -7,19 +7,19 @@ type UserType = 'borrow' | 'invest' | null
 
 interface UserContextType {
   userType: UserType
-  userBorrowId: number | null
-  userInvestId: number | null
+  userBorrowId: string | null
+  userInvestId: string | null
   setUserType: (type: UserType) => void
-  setUserBorrowId: (id: number | null) => void
-  setUserInvestId: (id: number | null) => void
+  setUserBorrowId: (id: string | null) => void
+  setUserInvestId: (id: string | null) => void
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined)
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [userType, setUserType] = useState<UserType>(null)
-  const [userBorrowId, setUserBorrowId] = useState<number | null>(null)
-  const [userInvestId, setUserInvestId] = useState<number | null>(null)
+  const [userBorrowId, setUserBorrowId] = useState<string | null>(null)
+  const [userInvestId, setUserInvestId] = useState<string | null>(null)
   const { user } = useAuth()
 
   useEffect(() => {
@@ -31,10 +31,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUserType(storedUserType)
     }
     if (storedUserBorrowId) {
-      setUserBorrowId(Number(storedUserBorrowId))
+      setUserBorrowId(storedUserBorrowId)
     }
     if (storedUserInvestId) {
-      setUserInvestId(Number(storedUserInvestId))
+      setUserInvestId(storedUserInvestId)
     }
   }, [])
 
@@ -59,21 +59,21 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
-  const updateUserBorrowId = (id: number | null) => {
+  const updateUserBorrowId = (id: string | null) => {
     console.log('사용자 대출 ID 업데이트:', id)
     setUserBorrowId(id)
     if (id !== null) {
-      localStorage.setItem('userBorrowId', id.toString())
+      localStorage.setItem('userBorrowId', id)
     } else {
       localStorage.removeItem('userBorrowId')
     }
   }
 
-  const updateUserInvestId = (id: number | null) => {
+  const updateUserInvestId = (id: string | null) => {
     console.log('사용자 투자 ID 업데이트:', id)
     setUserInvestId(id)
     if (id !== null) {
-      localStorage.setItem('userInvestId', id.toString())
+      localStorage.setItem('userInvestId', id)
     } else {
       localStorage.removeItem('userInvestId')
     }
