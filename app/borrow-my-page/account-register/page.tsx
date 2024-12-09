@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/button"
 import { ChevronDown } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -12,7 +12,6 @@ const banks = ["토스뱅크", "신한은행", "국민은행", "우리은행", "
 export default function AccountRegistration() {
   const [selectedBank, setSelectedBank] = useState("")
   const [accountNumber, setAccountNumber] = useState("")
-  const [accountHolder, setAccountHolder] = useState("")
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -20,12 +19,18 @@ export default function AccountRegistration() {
   const router = useRouter()
   const { user, token } = useAuth()
 
+  useEffect(() => {
+    if (!user) {
+      router.push('/auth/login')
+    }
+  }, [user, router])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
 
-    if (!user?.userBorrowId) {
+    if (!user?.userBorrowId || !user.userName) {
       setError("인증 정보를 찾을 수 없습니다. 다시 로그인해 주세요.")
       setIsLoading(false)
       return
@@ -48,7 +53,7 @@ export default function AccountRegistration() {
         {
           bankName: selectedBank,
           accountNumber,
-          accountHolder
+          accountHolder: user.userName
         },
         {
           params: { userId: user.userBorrowId },
@@ -65,6 +70,10 @@ export default function AccountRegistration() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (!user) {
+    return null
   }
 
   return (
@@ -121,18 +130,12 @@ export default function AccountRegistration() {
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="account-holder" className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700">
             예금주
           </label>
-          <input
-            id="account-holder"
-            type="text"
-            value={accountHolder}
-            onChange={(e) => setAccountHolder(e.target.value)}
-            placeholder="예금주 이름을 입력해 주세요."
-            className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm"
-            required
-          />
+          <p className="w-full px-4 py-2 bg-gray-100 border border-gray-200 rounded-md text-sm">
+            {user.userName}
+          </p>
         </div>
 
         {error && <p className="text-red-500">{error}</p>}
