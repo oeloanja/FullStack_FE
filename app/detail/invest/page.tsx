@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { Button } from "@/components/button"
 import { Card } from "@/components/card"
 import Link from "next/link"
+import { useAuth } from "@/contexts/AuthContext"
 
 const images = [
   '/invest-detail1.png',
@@ -14,6 +15,7 @@ const images = [
 
 export default function Component() {
   const [currentImage, setCurrentImage] = useState(0)
+  const { user } = useAuth()
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -22,6 +24,7 @@ export default function Component() {
 
     return () => clearInterval(timer)
   }, [])
+
   return (
     <div className="flex-1">
       {/* Hero Section */}
@@ -46,57 +49,61 @@ export default function Component() {
             ))}
           </div>
         </Card>
-        <Link href="../auth/signup/invest">
-        <Button className="bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-full px-8 py-6 text-lg">
-          회원가입 하고 투자 시작하기
-        </Button>
+        <Link href={user ? "/invest-apply" : "../auth/signup/invest"}>
+          <Button className="bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-full px-8 py-6 text-lg">
+            {user ? "투자 시작하기" : "회원가입 하고 투자 시작하기"}
+          </Button>
         </Link>
       </section>
       
       {/* Features Grid */}
       <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 space-y-8 bg-[#F7F7F7]">
         <Card className="p-4 sm:p-6 flex flex-col md:flex-row items-center gap-4 sm:gap-6">
-        <div className="md:w-1/2 aspect-video relative rounded-lg overflow-hidden" >
-        <Image
+          <div className="md:w-1/2 aspect-video relative rounded-lg overflow-hidden" >
+            <Image
               src="/invest-detail5.png"
               alt="중위험 중수익"
               fill
               className="object-cover"
             />
-        </div>
+          </div>
           <div className="md:w-1/2 space-y-2 sm:space-y-4 text-center md:text-left">
             <h3 className="text-xl sm:text-2xl font-bold">중위험 중수익으로 밸런스 있게</h3>
             <p className="text-sm sm:text-base text-gray-600">
-            불확실한 시장에서 <br className="sm:hidden" /> 중위험 / 중수익의 개인신용채권 투자
+              불확실한 시장에서 <br className="sm:hidden" /> 중위험 / 중수익의 개인신용채권 투자
             </p>
-            <Button className="rounded-full text-sm bg-white sm:text-base hover:bg-[#23E2C2]">
-              투자 시작하기
-            </Button>
+            <Link href={user ? "/invest-apply" : "../auth/signup/invest"}>
+              <Button className="rounded-full text-sm bg-white sm:text-base hover:bg-[#23E2C2]">
+                {user ? "투자 시작하기" : "회원가입 하고 투자 시작하기"}
+              </Button>
+            </Link>
           </div>
         </Card>
 
         <Card className="p-4 sm:p-6 flex flex-col md:flex-row-reverse items-center gap-4 sm:gap-6">
-        <div className="md:w-1/2 aspect-video relative rounded-lg overflow-hidden" >
-        <Image
+          <div className="md:w-1/2 aspect-video relative rounded-lg overflow-hidden" >
+            <Image
               src="/invest-detail4.png"
               alt="분산투자로 리스크 관리"
               fill
               className="object-cover"
             />
-        </div>
+          </div>
           <div className="md:w-1/2 space-y-2 sm:space-y-4 text-center md:text-left">
             <h3 className="text-xl sm:text-2xl font-bold">분산투자로 리스크 관리</h3>
             <p className="text-sm sm:text-base text-gray-600">
-            채무불이행으로 인한 손실 걱정 NO!<br/> 여러명의 채무자에게 투자하여 <br className="sm:hidden" />
-            손실율을 줄였습니다.
+              채무불이행으로 인한 손실 걱정 NO!<br/> 여러명의 채무자에게 투자하여 <br className="sm:hidden" />
+              손실율을 줄였습니다.
             </p>
-            <Button className="rounded-full text-sm sm:text-base bg-white hover:bg-[#23E2C2]">
-            투자 시작하기
-            </Button>
+            <Link href={user ? "/invest-apply" : "../auth/signup/invest"}>
+              <Button className="rounded-full text-sm sm:text-base bg-white hover:bg-[#23E2C2]">
+                {user ? "투자 시작하기" : "회원가입 하고 투자 시작하기"}
+              </Button>
+            </Link>
           </div>
-          
         </Card>
       </section>
     </div>
   )
 }
+

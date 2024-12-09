@@ -140,7 +140,8 @@ export default function LoanApplicationForm() {
         if (validAccounts.length > 0) {
           setIsModalOpen(true);
         } else {
-          toast.error('유효한 계좌가 없습니다. 계좌 등록을 진행해 주세요!');
+          alert("현재 등록된 계좌가 없습니다! 계좌 등록을 먼저 진행해 주세요!");
+          router.push('/borrow-my-page')
         }
       } else {
         throw new Error('Invalid response data');

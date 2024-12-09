@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { Button } from "@/components/button"
 import { Card } from "@/components/card"
 import Link from "next/link"
+import { useAuth } from "@/contexts/AuthContext"
 
 const images = [
   '/borrow-detail1.png',
@@ -14,6 +15,7 @@ const images = [
 
 export default function Component() {
   const [currentImage, setCurrentImage] = useState(0)
+  const { user } = useAuth()
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -47,10 +49,10 @@ export default function Component() {
             ))}
           </div>
         </Card>
-        <Link href="../auth/signup/borrow">
-        <Button className="bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-full px-8 py-6 text-lg">
-          회원가입 하고 1분안에 대출 한도 알아보기
-        </Button>
+        <Link href={user ? "/borrow-apply/input" : "../auth/signup/borrow"}>
+          <Button className="bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-full px-8 py-6 text-lg">
+            {user ? "1분안에 대출 한도 알아보기" : "회원가입 하고 1분안에 대출 한도 알아보기"}
+          </Button>
         </Link>
       </section>
       
@@ -70,9 +72,11 @@ export default function Component() {
             <p className="text-sm sm:text-base text-gray-600">
               빡빡한 대출 심사는 이제 Bye~ <br className="sm:hidden" /> BilliT 만의 신용등급평가모델로<br /> 쉽고 간편하게 신용 산정 해드려요.
             </p>
-            <Button className="rounded-full text-sm bg-white sm:text-base hover:bg-[#23E2C2]">
-              대출 신용 평가 받으러 가기
-            </Button>
+            <Link href={user ? "/borrow-apply/input" : "../auth/signup/borrow"}>
+              <Button className="rounded-full text-sm bg-white sm:text-base hover:bg-[#23E2C2]">
+                {user ? "대출 신용 평가 받으러 가기" : "회원가입 하고 대출 신용 평가 받기"}
+              </Button>
+            </Link>
           </div>
         </Card>
 
@@ -91,9 +95,11 @@ export default function Component() {
               제 2금융권 대비 <br/> 합리적인 대출금리로 <br className="sm:hidden" />
               여러분의 부담을 덜어드립니다!
             </p>
-            <Button className="rounded-full text-sm sm:text-base bg-white hover:bg-[#23E2C2]">
-              대출 신용 평가 받으러 가기
-            </Button>
+            <Link href={user ? "/borrow-apply/input" : "../auth/signup/borrow"}>
+              <Button className="rounded-full text-sm sm:text-base bg-white hover:bg-[#23E2C2]">
+                {user ? "대출 신용 평가 받으러 가기" : "회원가입 하고 대출 신용 평가 받기"}
+              </Button>
+            </Link>
           </div>
         </Card>
       </section>
