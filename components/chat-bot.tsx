@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { MessageCircle, X, Send } from 'lucide-react'
+import { MessageCircle, X, Send, Loader2 } from 'lucide-react'
 import { Button } from '@/components/button'
 import { Card } from '@/components/card'
 import Image from 'next/image'
-import api from '@/utils/api'
 import { useAuth } from '@/contexts/AuthContext'
+import api from '@/utils/api'
 
 interface Message {
   id: string
@@ -36,49 +36,64 @@ export function ChatBot() {
   }
 
   const openChat = async () => {
-    const userId = getUserId()
-    console.log('Opening chat with userId:', userId)
-    
-    if (!userId) {
-      console.error('User ID not available')
-      return
-    }
-
     setIsModalOpen(true)
     setIsLoading(true)
 
-    try {
-      const response = await api.post('/chat/open', {
-        uuid: userId
-      })
+    const userId = getUserId()
+    if (isAuthenticated && userId) {
+      try {
+        const response = await api.post('/chat/open', {
+          uuid: userId
+        })
 
-      if (response.status !== 200) {
-        throw new Error('Failed to open chat')
+        if (response.status !== 200) {
+          throw new Error('Failed to open chat')
+        }
+
+        const welcomeMessage: Message = {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: '채팅이 시작되었습니다. 무엇을 도와드릴까요?'
+        }
+
+        setMessages([welcomeMessage])
+      } catch (error) {
+        console.error('Chat open error:', error)
+        setMessages([{
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: '채팅을 시작하는 데 문제가 발생했습니다. 다시 시도해 주세요.'
+        }])
       }
-
-      const welcomeMessage: Message = {
-        id: Date.now().toString(),
-        role: 'assistant',
-        content: '채팅이 시작되었습니다. 무엇을 도와드릴까요?'
-      }
-
-      setMessages([welcomeMessage])
-    } catch (error) {
-      console.error('Chat open error:', error)
+    } else {
       setMessages([{
         id: Date.now().toString(),
         role: 'assistant',
-        content: '채팅을 시작하는 데 문제가 발생했습니다. 다시 시도해 주세요.'
+        content: '안녕하세요! 무엇을 도와드릴까요?'
       }])
-    } finally {
-      setIsLoading(false)
     }
+
+    setIsLoading(false)
+  }
+
+  const parseMarkdown = (content: string): string => {
+    return content
+      .replace(/\\n/g, '\n')
+      .replace(/\n/g, '<br />')
+      .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+      .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+      .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+      .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/^(\d+\.)\s/gm, '<br />$1 ')
+      .replace(/^[-*]\s/gm, '<br />• ')
+      .trim()
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const userId = getUserId()
-    if (!input.trim() || isLoading || !userId) return
+    if (!input.trim() || isLoading) return
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -91,18 +106,34 @@ export function ChatBot() {
     setIsLoading(true)
 
     try {
-      const response = await api.post('/chat/login', {
-        input: userMessage.content.toString()
+      const userId = getUserId()
+      const response = await api.post(isAuthenticated ? '/chat/login' : '/chat/non', {
+        input: userMessage.content.toString(),
+        ...(userId && { uuid: userId })
       })
 
       if (response.status !== 200) {
         throw new Error('Failed to fetch response')
       }
 
+      let content = ''
+      if (typeof response.data === 'string') {
+        try {
+          const parsedData = JSON.parse(response.data)
+          content = parsedData.output || response.data
+        } catch {
+          content = response.data
+        }
+      } else if (typeof response.data === 'object' && response.data.output) {
+        content = response.data.output
+      } else {
+        content = JSON.stringify(response.data)
+      }
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: response.data
+        content: parseMarkdown(content)
       }
 
       setMessages(prev => [...prev, assistantMessage])
@@ -117,10 +148,6 @@ export function ChatBot() {
     } finally {
       setIsLoading(false)
     }
-  }
-
-  if (!isAuthenticated) {
-    return null
   }
 
   return (
@@ -167,7 +194,7 @@ export function ChatBot() {
                   <div className={`rounded-2xl px-4 py-2 max-w-[80%] ${
                     m.role === 'user' ? 'bg-[#23E2C2] text-white' : 'bg-gray-100'
                   }`}>
-                    <p>{m.content}</p>
+                    <p dangerouslySetInnerHTML={{ __html: m.content }}></p>
                   </div>
                 </div>
               ))}
@@ -178,10 +205,12 @@ export function ChatBot() {
               <div className="flex gap-2">
                 <input
                   type="text"
-                  value={input}
+                  value={isLoading ? "챗봇이 대답을 준비하고 있어요!" : input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="질문하고 싶은 사항을 입력해주세요."
-                  className="flex-1 px-4 py-2 rounded-full border focus:outline-none focus:ring-2 focus:ring-[#23E2C2] focus:border-transparent"
+                  className={`flex-1 px-4 py-2 rounded-full border focus:outline-none focus:ring-2 focus:ring-[#23E2C2] focus:border-transparent ${
+                    isLoading ? 'text-gray-400' : 'text-gray-900'
+                  }`}
                   disabled={isLoading}
                 />
                 <Button 
@@ -189,7 +218,11 @@ export function ChatBot() {
                   className="rounded-full bg-[#23E2C2] hover:bg-[#23E2C2]/90"
                   disabled={isLoading}
                 >
-                  <Send className="w-5 h-5 text-white" />
+                  {isLoading ? (
+                    <Loader2 className="w-5 h-5 text-white animate-spin" />
+                  ) : (
+                    <Send className="w-5 h-5 text-white" />
+                  )}
                 </Button>
               </div>
             </form>

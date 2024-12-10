@@ -141,10 +141,14 @@ export default function LoginPage() {
             </Button>
 
             <div className="text-center">
-              PW가 기억나지 않으신가요? <Link 
+              <Link 
                 href="forgot-password" 
-                className="text-sm text-[#23E2C2]"
-              >PW 찾기
+                className="text-sm text-[#AEAEAE]"
+              >PW 찾기 |</Link> 
+              <Link 
+                href="select-type" 
+                className="text-sm text-[#AEAEAE]"
+              > 회원가입
               </Link>
             </div>
           </form>

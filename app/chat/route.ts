@@ -11,8 +11,9 @@ export async function POST(req: Request) {
     if (action === 'open') {
       endpoint = '/chat/open'
       body = { uuid }
+    } else if (action === 'non') {
+      endpoint = '/chat/non'
     } else if (uuid) {
-      endpoint = '/chat/open'
       body = { ...body, uuid }
     }
     
