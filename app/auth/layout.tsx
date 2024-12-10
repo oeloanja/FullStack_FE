@@ -12,7 +12,7 @@ export default function AuthLayout({
 }) {
   return (
     <div className="flex flex-col min-h-screen">
-      <main className="flex-1 w-full max-w-none px-4 py-1 sm:px-6 lg:px-8 pt-16">
+      <main className="flex-1 w-full max-w-none px-4 py-1 sm:px-6 lg:px-8 pt-12">
         {children}
       </main>
     </div>

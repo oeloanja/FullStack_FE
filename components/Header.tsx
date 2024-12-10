@@ -29,7 +29,7 @@ export function Header() {
             className="h-8 w-auto"
           />
         </Link>
-        <nav className="flex gap-8 items-center">
+        <nav className="flex gap-6 items-center">
           {!isAuthenticated && (
             <>
               <Link href="/detail/borrow" className="text-gray-600 hover:text-[#4FFFD7] transition-colors">
