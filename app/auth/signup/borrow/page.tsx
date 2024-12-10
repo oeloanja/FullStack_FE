@@ -149,7 +149,7 @@ export default function BorrowerSignup() {
                   type="button"
                   onClick={handleSendVerification}
                   disabled={isLoading || isVerificationSent}
-                  className="bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-md px-4"
+                  className="bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-md px-2"
                 >
                   인증코드 전송
                 </Button>
@@ -174,7 +174,7 @@ export default function BorrowerSignup() {
                     type="button"
                     onClick={handleVerifyCode}
                     disabled={isLoading}
-                    className="bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-md px-4"
+                    className="bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-md px-2"
                   >
                     인증 확인
                   </Button>
