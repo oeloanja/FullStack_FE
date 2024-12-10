@@ -13,14 +13,15 @@ import Script from 'next/script'
 import { formatNumber, parseNumber } from '@/utils/numberFormat';
 import AWS from 'aws-sdk';
 
-
-AWS.config.update({
-  accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY,    
-  secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_KEY,
-  region: 'ap-northeast-2'
+// AWS 설정 
+AWS.config.update({ 
+  accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY, 
+  secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_KEY, 
+  region: 'ap-northeast-2' 
 });
 
 const s3 = new AWS.S3();
+
 
 interface Account {
   accountId: number
@@ -123,7 +124,7 @@ export default function LoanApplicationForm() {
     }
 
     try {
-        // S3 업로드
+        // 1. S3에 PDF 업로드
         const uploadParams = {
             Bucket: 'billit-bucket',
             Key: `uploads/${Date.now()}-${file.name}`,
@@ -132,28 +133,28 @@ export default function LoanApplicationForm() {
         };
 
         const uploadResult = await s3.upload(uploadParams).promise();
-        
-        // 백엔드로 URL 전송
-        const response = await fetch('your-backend-url/process-pdf', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                pdfUrl: uploadResult.Location
-            })
-        });
+        console.log('S3 업로드 성공:', uploadResult.Location);
 
-        const data = await response.json();
-        console.log('Extracted data:', data);
-        
-        // 파일 업로드 성공 후 form 값 설정
         setValue(fieldName, file)
         toast.success('PDF 업로드 완료')
+        
+    //     // 2. 파이썬 백엔드로 S3 URL 전송하여 PDF 처리 요청
+    //     const pdfResponse = await api.post('/api/v1/pdf-service/process', {
+    //         pdfUrl: uploadResult.Location
+    //     }, {
+    //         headers: {
+    //             'Authorization': `Bearer ${token}`
+    //         }
+    //     });
+
+    //     // 3. 처리된 PDF 데이터 저장
+    //     console.log('추출된 PDF 데이터:', pdfResponse.data);
+    //     setValue(fieldName, file)
+    //     toast.success('PDF 업로드 및 처리 완료')
 
     } catch (error) {
-        console.error('Upload error:', error)
-        toast.error('PDF 업로드 중 오류가 발생했습니다.')
+        console.error('Upload/Process error:', error)
+        toast.error('PDF 처리 중 오류가 발생했습니다.')
     }
 }
 
@@ -512,4 +513,3 @@ export default function LoanApplicationForm() {
     </form>
   )
 }
-
