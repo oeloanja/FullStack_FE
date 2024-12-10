@@ -81,7 +81,7 @@ export function ChatBot() {
     <>
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-8 right-8 w-16 h-16 rounded-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 shadow-lg z-50"
+        className="fixed bottom-8 left-8 w-16 h-16 rounded-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 shadow-lg z-50"
       >
         <MessageCircle className="w-8 h-8 text-white" />
       </Button>
