@@ -19,7 +19,7 @@ export function Header() {
 
   return (
     <header className="border-b">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+      <div className="container mx-auto h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
           <Image
             src="/billit_logo.png"
@@ -29,7 +29,7 @@ export function Header() {
             className="h-8 w-auto"
           />
         </Link>
-        <nav className="flex gap-6 items-center">
+        <nav className="flex gap-5 items-center">
           {!isAuthenticated && (
             <>
               <Link href="/detail/borrow" className="text-gray-600 hover:text-[#4FFFD7] transition-colors">
