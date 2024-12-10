@@ -143,7 +143,7 @@ export function ChatBot() {
                   className="rounded-full bg-[#23E2C2] hover:bg-[#23E2C2]/90"
                   disabled={isLoading}
                 >
-                  <Send className="w-5 h-5" />
+                  <Send className="w-5 h-5 text-white" />
                 </Button>
               </div>
             </form>

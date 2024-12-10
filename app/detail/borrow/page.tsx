@@ -50,7 +50,7 @@ export default function Component() {
           </div>
         </Card>
         <Link href={user ? "/borrow-apply/input" : "../auth/signup/borrow"}>
-          <Button className="bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-full px-8 py-6 text-lg">
+          <Button className="bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-full px-8 py-6 text-lg ">
             {user ? "1분안에 대출 한도 알아보기" : "회원가입 하고 1분안에 대출 한도 알아보기"}
           </Button>
         </Link>

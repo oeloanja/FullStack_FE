@@ -22,7 +22,7 @@ export default function Home() {
                 직장인 신용대출 최저 5.0%<br className="sm:hidden" /> 최대 500만원
               </p>
             </div>
-            <Button variant="outline" className="text-black hover:bg-[#23E2C2]/90 rounded-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base">
+            <Button variant="outline" className="text-black hover:bg-[#23E2C2]/90 rounded-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base hover:text-white">
               챗봇에게 간편하게 상담해보기!
             </Button>
           </div>
@@ -75,7 +75,7 @@ export default function Home() {
               출근길에 신청하면<br className="sm:hidden" /> 퇴근길에 송금완료
             </p>
             <Link href="/detail/borrow">
-              <Button className="rounded-full text-sm mt-4 sm:text-base bg-white hover:bg-[#23E2C2]">
+              <Button className="rounded-full text-sm mt-4 sm:text-base bg-white hover:bg-[#23E2C2] hover:text-white">
                 더 알아보기
               </Button>
             </Link>
@@ -97,7 +97,7 @@ export default function Home() {
               P2P 대출, 수익성 UP!<br className="sm:hidden" /> 분산투자, 리스크 DOWN!
             </p>
             <Link href="/detail/invest">
-              <Button className="rounded-full mt-4 text-sm sm:text-base bg-white hover:bg-[#23E2C2]">
+              <Button className="rounded-full mt-4 text-sm sm:text-base bg-white hover:bg-[#23E2C2] hover:text-white">
                 더 알아보기
               </Button>
             </Link>
@@ -114,7 +114,7 @@ export default function Home() {
           <div className="flex items-center justify-center mb-4">
             <div className="w-full aspect-[4/3] bg-gray-100 rounded-lg" />
           </div>
-          <Button variant="outline" className="w-full text-black hover:bg-[#23E2C2]/90 rounded-full text-sm sm:text-base">
+          <Button variant="outline" className="w-full text-black hover:bg-[#23E2C2]/90 rounded-full text-sm sm:text-base hover:text-white">
             챗봇 사용해보기
           </Button>
         </Card>
