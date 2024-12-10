@@ -11,6 +11,16 @@ import { toast } from 'react-hot-toast'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/dialog"
 import Script from 'next/script'
 import { formatNumber, parseNumber } from '@/utils/numberFormat';
+import AWS from 'aws-sdk';
+
+
+AWS.config.update({
+  accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY,    
+  secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_KEY,
+  region: 'ap-northeast-2'
+});
+
+const s3 = new AWS.S3();
 
 interface Account {
   accountId: number
@@ -105,14 +115,47 @@ export default function LoanApplicationForm() {
     setIsSubmitting(false);
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
     const file = event.target.files?.[0]
-    if (file && file.type === 'application/pdf') {
-      setValue(fieldName, file)
-    } else {
-      toast.error('PDF 파일만 업로드 가능합니다.')
+    if (!file || file.type !== 'application/pdf') {
+        toast.error('PDF 파일만 업로드 가능합니다.')
+        return
     }
-  }
+
+    try {
+        // S3 업로드
+        const uploadParams = {
+            Bucket: 'billit-bucket',
+            Key: `uploads/${Date.now()}-${file.name}`,
+            Body: file,
+            ContentType: 'application/pdf'
+        };
+
+        const uploadResult = await s3.upload(uploadParams).promise();
+        
+        // 백엔드로 URL 전송
+        const response = await fetch('your-backend-url/process-pdf', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                pdfUrl: uploadResult.Location
+            })
+        });
+
+        const data = await response.json();
+        console.log('Extracted data:', data);
+        
+        // 파일 업로드 성공 후 form 값 설정
+        setValue(fieldName, file)
+        toast.success('PDF 업로드 완료')
+
+    } catch (error) {
+        console.error('Upload error:', error)
+        toast.error('PDF 업로드 중 오류가 발생했습니다.')
+    }
+}
 
   const fetchAccounts = async () => {
     if (!token) {

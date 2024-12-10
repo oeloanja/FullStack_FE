@@ -1,15 +1,27 @@
 import { NextResponse } from 'next/server'
+import { API_BASE_URL } from '@/utils/api'
 
 export async function POST(req: Request) {
   try {
-    const { message } = await req.json()
+    const { message, uuid, action } = await req.json()
     
-    const response = await fetch(`${process.env.PYTHON_BACKEND_URL}/chat`, {
+    let endpoint = '/chat/login'
+    let body: any = { query: message }
+
+    if (action === 'open') {
+      endpoint = '/chat/open'
+      body = { uuid }
+    } else if (uuid) {
+      endpoint = '/chat/open'
+      body = { ...body, uuid }
+    }
+    
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ query: message }),
+      body: JSON.stringify(body),
     })
 
     if (!response.ok) {
