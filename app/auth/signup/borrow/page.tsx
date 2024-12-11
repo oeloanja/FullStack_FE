@@ -56,6 +56,8 @@ export default function BorrowerSignup() {
   const [verificationCode, setVerificationCode] = useState("")
   const [isVerificationSent, setIsVerificationSent] = useState(false)
   const [isVerified, setIsVerified] = useState(false)
+  const [isTermsAgreed, setIsTermsAgreed] = useState(false)
+  const [showTerms, setShowTerms] = useState(false)
   const router = useRouter()
 
   const handleSendVerification = async () => {
@@ -103,6 +105,11 @@ export default function BorrowerSignup() {
         return;
       }
 
+      if (!isTermsAgreed) {
+        setToast({ message: '개인정보 취급 위탁에 동의해주세요.', type: 'error' })
+        return;
+      }
+
       if (formData.password !== formData.passwordConfirm) {
         setToast({ message: '비밀번호가 일치하지 않습니다.', type: 'error' })
         return;
@@ -126,7 +133,7 @@ export default function BorrowerSignup() {
 
   return (
     <div className="flex-1 flex flex-col">
-      <main className="flex-1 flex flex-col items-center justify-center px-4">
+      <main className="flex-1 flex flex-col items-center justify-center px-4 mb-16">
         <div className="w-full max-w-md space-y-8">
           <h1 className="text-3xl font-bold text-center">대출자 회원가입</h1>
           
@@ -134,7 +141,7 @@ export default function BorrowerSignup() {
             {/* Email */}
             <div className="space-y-2">
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">이메일</label>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   id="email"
                   type="email"
@@ -149,7 +156,7 @@ export default function BorrowerSignup() {
                   type="button"
                   onClick={handleSendVerification}
                   disabled={isLoading || isVerificationSent}
-                  className="bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-md px-2"
+                  className="bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-md px-2 py-2 w-full sm:w-auto"
                 >
                   인증코드 전송
                 </Button>
@@ -160,7 +167,7 @@ export default function BorrowerSignup() {
             {isVerificationSent && !isVerified && (
               <div className="space-y-2">
                 <label htmlFor="verificationCode" className="block text-sm font-medium text-gray-700">인증 코드</label>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     id="verificationCode"
                     type="text"
@@ -174,7 +181,7 @@ export default function BorrowerSignup() {
                     type="button"
                     onClick={handleVerifyCode}
                     disabled={isLoading}
-                    className="bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-md px-2"
+                    className="bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-md px-2 py-2 w-full sm:w-auto"
                   >
                     인증 확인
                   </Button>
@@ -238,10 +245,76 @@ export default function BorrowerSignup() {
               />
             </div>
 
+            {/* Terms of Service */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="termsAgreement"
+                    checked={isTermsAgreed}
+                    onChange={(e) => setIsTermsAgreed(e.target.checked)}
+                    className="rounded border-gray-300 text-[#23E2C2] focus:ring-[#23E2C2]"
+                  />
+                  <label htmlFor="termsAgreement" className="text-sm text-gray-700">
+                    개인정보 취급 위탁에 동의합니다.
+                  </label>
+                </div>
+                <Button
+                  type="button"
+                  onClick={() => setShowTerms(true)}
+                  className="bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-md px-2"
+                >
+                  전문보기
+                </Button>
+              </div>
+            </div>
+
+            {/* Terms of Service Modal */}
+            {showTerms && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                <div className="bg-white p-6 rounded-lg max-w-md w-full max-h-[80vh] overflow-y-auto">
+                  <h2 className="text-xl font-bold mb-4">개인정보 취급 위탁 동의</h2>
+                  <p className="mb-4">
+                    본인 확인 서비스 제공을 위해 개인정보 취급 위탁 동의를 받고자 합니다. 아래 보기에서 동의 여부를 선택해 주세요.
+                  </p>
+                  <ul className="list-disc pl-5 mb-4">
+                    <li>수탁자: (주)회사명</li>
+                    <li>개인정보 수집 및 이용 목적: 회원가입 등에 필요한 본인확인 서비스 제공</li>
+                    <li>수집하는 개인정보 항목: 이름, 연락처</li>
+                    <li>개인정보 보유 및 이용 기간: 수집 일로부터 3년</li>
+                  </ul>
+                  <p className="mb-4">
+                    ※ 귀하께서는 동의하지 않을 권리가 있습니다. 동의하지 않을 경우 서비스를 이용할 수 없음을 알려드립니다.
+                  </p>
+                  <p className="font-bold mb-4">개인정보 취급 위탁에 대해 동의하시나요?</p>
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      type="button"
+                      onClick={() => setShowTerms(false)}
+                      className="bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md px-4 py-2"
+                    >
+                      닫기
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        setIsTermsAgreed(true);
+                        setShowTerms(false);
+                      }}
+                      className="bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-md px-4 py-2"
+                    >
+                      동의
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Submit Button */}
             <Button 
               type="submit"
-              disabled={isLoading || !isVerified}
+              disabled={isLoading || !isVerified || !isTermsAgreed}
               className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white h-12 text-lg rounded-md disabled:opacity-50"
             >
               {isLoading ? '처리중...' : '회원가입 완료'}

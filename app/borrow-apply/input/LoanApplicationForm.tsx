@@ -426,7 +426,7 @@ export default function LoanApplicationForm() {
                   </select>
                 )}
               />
-              <p className="text-sm text-gray-500 mt-2">* 상환기간은 정액 분할 상환으로 고정됩니다</p>
+              <p className="text-sm text-gray-500 mt-2">* 상환방식은 <a className="text-[#23E2C2]">정액 분할 상환</a>으로 고정됩니다</p>
             </div>
 
             <div>

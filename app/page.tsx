@@ -22,9 +22,11 @@ export default function Home() {
                 직장인 신용대출 최저 5.0%<br className="sm:hidden" /> 최대 500만원
               </p>
             </div>
+            <Link href="/auth/select-type">
             <Button variant="outline" className="text-black hover:bg-[#23E2C2]/90 rounded-full px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base hover:text-white">
-              챗봇에게 간편하게 상담해보기!
+              회원가입하고 서비스 이용해 보기!
             </Button>
+            </Link>
           </div>
           <div className="relative aspect-[4/3] rounded-lg mt-8 md:mt-0 overflow-hidden">
             <Image
@@ -121,9 +123,11 @@ export default function Home() {
               />
             </div>
           </div>
+          <Link href="/auth/select-type">
           <Button variant="outline" className="w-full text-black hover:bg-[#23E2C2]/90 rounded-full text-sm sm:text-base hover:text-white">
-            챗봇 사용해보기
+          회원가입하고 챗봇 사용해보기
           </Button>
+          </Link>
         </Card>
       </section>
     </div>
