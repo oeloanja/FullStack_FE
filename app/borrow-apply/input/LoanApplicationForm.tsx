@@ -13,16 +13,6 @@ import Script from 'next/script'
 import { formatNumber, parseNumber } from '@/utils/numberFormat';
 import AWS from 'aws-sdk';
 
-// AWS 설정 
-AWS.config.update({ 
-  accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY, 
-  secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_KEY, 
-  region: 'ap-northeast-2' 
-});
-
-const s3 = new AWS.S3();
-
-
 interface Account {
   accountId: number
   bankName: string
@@ -124,21 +114,21 @@ export default function LoanApplicationForm() {
     }
 
     try {
-        // 1. S3에 PDF 업로드
-        const uploadParams = {
-            Bucket: 'billit-bucket',
-            Key: `uploads/${Date.now()}-${file.name}`,
-            Body: file,
-            ContentType: 'application/pdf'
-        };
+        const formData = new FormData();
+        formData.append('file', file);
 
-        const uploadResult = await s3.upload(uploadParams).promise();
-        console.log('S3 업로드 성공:', uploadResult.Location);
+        // 이미 만들어둔 NextJS API Route 사용
+        const uploadResponse = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await uploadResponse.json();
+        console.log('S3 업로드 성공:', result.url);
 
         setValue(fieldName, file)
         toast.success('PDF 업로드 완료')
-        
-    //     // 2. 파이썬 백엔드로 S3 URL 전송하여 PDF 처리 요청
+        //     // 2. 파이썬 백엔드로 S3 URL 전송하여 PDF 처리 요청
     //     const pdfResponse = await api.post('/api/v1/pdf-service/process', {
     //         pdfUrl: uploadResult.Location
     //     }, {
@@ -268,248 +258,253 @@ export default function LoanApplicationForm() {
   }, [error]);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="grid md:grid-cols-2 gap-8">
-      <Script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js" strategy="lazyOnload" />
-      
-      {/* Left Column */}
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-sm font-medium text-gray-600 mb-2">마이데이터 불러오기</h2>
-          <Button 
-            type="button"
-            className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-[10px] h-12"
-          >
-            마이데이터 한 번에 불러오기
-          </Button>
-        </div>
+    <div className="max-w-5xl mx-auto px-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        <Script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js" strategy="lazyOnload" />
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Left Column */}
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">마이데이터 불러오기</h2>
+              <Button 
+                type="button"
+                className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-[10px] h-12 font-medium"
+              >
+                마이데이터 한 번에 불러오기
+              </Button>
+            </div>
 
-        <div className="space-y-4">
-          <h2 className="text-sm font-medium text-gray-600">주소 입력</h2>
-          <div className="flex gap-2">
-            <Controller
-              name="postcode"
-              control={control}
-              render={({ field }) => (
-                <input
-                  {...field}
-                  type="text"
-                  placeholder="우편번호"
-                  className="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-[10px] text-sm"
-                  readOnly
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-gray-900">주소 입력</h2>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Controller
+                  name="postcode"
+                  control={control}
+                  render={({ field }) => (
+                    <input
+                      {...field}
+                      type="text"
+                      placeholder="우편번호"
+                      className="w-full sm:w-2/3 px-4 py-2 bg-white border border-gray-300 rounded-[10px] text-sm focus:outline-none focus:ring-2 focus:ring-[#23E2C2]"
+                      readOnly
+                    />
+                  )}
                 />
-              )}
-            />
-            <Button 
-              type="button"
-              onClick={execDaumPostcode}
-              className="bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-[10px] px-6"
-            >
-              우편번호 찾기
-            </Button>
-          </div>
-          <Controller
-            name="roadAddress"
-            control={control}
-            render={({ field }) => (
-              <input
-                {...field}
-                type="text"
-                placeholder="도로명주소"
-                className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-[10px] text-sm"
-                readOnly
-              />
-            )}
-          />
-          <Controller
-            name="jibunAddress"
-            control={control}
-            render={({ field }) => (
-              <input
-                {...field}
-                type="text"
-                placeholder="지번주소"
-                className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-[10px] text-sm"
-                readOnly
-              />
-            )}
-          />
-          <Controller
-            name="detailAddress"
-            control={control}
-            render={({ field }) => (
-              <input
-                {...field}
-                type="text"
-                placeholder="상세주소"
-                className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-[10px] text-sm"
-              />
-            )}
-          />
-          <Controller
-            name="extraAddress"
-            control={control}
-            render={({ field }) => (
-              <input
-                {...field}
-                type="text"
-                placeholder="참고항목"
-                className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-[10px] text-sm"
-                readOnly
-              />
-            )}
-          />
-        </div>
-
-        <div>
-          <h2 className="text-sm font-medium text-gray-600 mb-2">필수 서류 제출</h2>
-          <div className="flex gap-2">
-            <input
-              type="file"
-              accept=".pdf"
-              ref={incomeFileInputRef}
-              onChange={(e) => handleFileUpload(e, 'incomeFile')}
-              className="hidden"
-            />
-            <Button 
-              type="button"
-              className="flex-1 bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-[10px] h-12"
-              onClick={() => incomeFileInputRef.current?.click()}
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              {watch('incomeFile') ? '소득증명원 업로드 완료' : '소득증명원 업로드'}
-            </Button>
-            <input
-              type="file"
-              accept=".pdf"
-              ref={employmentFileInputRef}
-              onChange={(e) => handleFileUpload(e, 'employmentFile')}
-              className="hidden"
-            />
-            <Button 
-              type="button"
-              className="flex-1 bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-[10px] h-12"
-              onClick={() => employmentFileInputRef.current?.click()}
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              {watch('employmentFile') ? '재직증명서 업로드 완료' : '재직증명서 업로드'}
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Right Column */}
-      <div className="space-y-6">
-        <div className="relative">
-          <h2 className="text-sm font-medium text-gray-600 mb-2">대출 신청 사유</h2>
-          <Controller
-            name="selectedReason"
-            control={control}
-            render={({ field }) => (
-              <select
-                {...field}
-                className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-[10px] h-12 px-4"
-              >
-                <option className="bg-white text-black text-center" value="">신청 사유를 선택해주세요</option>
-                {reasons.map((reason) => (
-                  <option className="bg-white text-black" key={reason} value={reason}>{reason}</option>
-                ))}
-              </select>
-            )}
-          />
-        </div>
-
-        <div className="relative">
-          <h2 className="text-sm font-medium text-gray-600 mb-2">상환 기간</h2>
-          <Controller
-            name="selectedPeriod"
-            control={control}
-            render={({ field }) => (
-              <select
-                {...field}
-                className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-[10px] h-12 px-4"
-              >
-                {periods.map((period) => (
-                  <option className="bg-white text-black text-center" key={period} value={period}>{period}</option>
-                ))}
-              </select>
-            )}
-          />
-          <p className="text-xs text-gray-500 mt-1">* 상환기간은 원리금 균등상환으로 고정됩니다</p>
-        </div>
-
-        <div>
-          <h2 className="text-sm font-medium text-gray-600 mb-2">대출 금액</h2>
-          <Controller
-            name="loanAmount"
-            control={control}
-            rules={{ required: '대출 금액을 입력해주세요.' }}
-            render={({ field: { onChange, value } }) => (
-              <input
-                type="text"
-                placeholder="대출 희망 금액 (원)"
-                className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-[10px] text-sm"
-                value={formatNumber(value)}
-                onChange={(e) => {
-                  onChange(e.target.value);
-                }}
-              />
-            )}
-          />
-        </div>
-
-        <div>
-          <h2 className="text-sm font-medium text-gray-600 mb-2">계좌 정보</h2>
-          <div className="border border-dashed border-[#23E2C2] rounded-2xl p-8">
-            <div className="text-center mb-4">
+                <Button 
+                  type="button"
+                  onClick={execDaumPostcode}
+                  className="w-full sm:w-1/3 bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-[10px] px-4 py-2 font-medium"
+                >
+                  우편번호 찾기
+                </Button>
+              </div>
               <Controller
-                name="selectedAccount"
+                name="roadAddress"
                 control={control}
                 render={({ field }) => (
-                  <span className="text-gray-600">
-                    {field.value ? `${field.value.bankName} | ${field.value.accountNumber}` : '대출금 입금 계좌'}
-                  </span>
+                  <input
+                    {...field}
+                    type="text"
+                    placeholder="도로명주소"
+                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-[10px] text-sm focus:outline-none focus:ring-2 focus:ring-[#23E2C2]"
+                    readOnly
+                  />
+                )}
+              />
+              <Controller
+                name="jibunAddress"
+                control={control}
+                render={({ field }) => (
+                  <input
+                    {...field}
+                    type="text"
+                    placeholder="지번주소"
+                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-[10px] text-sm focus:outline-none focus:ring-2 focus:ring-[#23E2C2]"
+                    readOnly
+                  />
+                )}
+              />
+              <Controller
+                name="detailAddress"
+                control={control}
+                render={({ field }) => (
+                  <input
+                    {...field}
+                    type="text"
+                    placeholder="상세주소"
+                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-[10px] text-sm focus:outline-none focus:ring-2 focus:ring-[#23E2C2]"
+                  />
+                )}
+              />
+              <Controller
+                name="extraAddress"
+                control={control}
+                render={({ field }) => (
+                  <input
+                    {...field}
+                    type="text"
+                    placeholder="참고항목"
+                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-[10px] text-sm focus:outline-none focus:ring-2 focus:ring-[#23E2C2]"
+                    readOnly
+                  />
                 )}
               />
             </div>
-            <Button 
-              type="button"
-              onClick={fetchAccounts}
-              className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-[10px] h-12"
-            >
-              {watch('selectedAccount') ? "입금 계좌 변경" : "입금 계좌 선택"}
-            </Button>
+
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">필수 서류 제출</h2>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="file"
+                  accept=".pdf"
+                  ref={incomeFileInputRef}
+                  onChange={(e) => handleFileUpload(e, 'incomeFile')}
+                  className="hidden"
+                />
+                <Button 
+                  type="button"
+                  className="flex-1 bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-[10px] h-12 font-medium"
+                  onClick={() => incomeFileInputRef.current?.click()}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  {watch('incomeFile') ? '소득증명원 업로드 완료' : '소득증명원 업로드'}
+                </Button>
+                <input
+                  type="file"
+                  accept=".pdf"
+                  ref={employmentFileInputRef}
+                  onChange={(e) => handleFileUpload(e, 'employmentFile')}
+                  className="hidden"
+                />
+                <Button 
+                  type="button"
+                  className="flex-1 bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-[10px] h-12 font-medium"
+                  onClick={() => employmentFileInputRef.current?.click()}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  {watch('employmentFile') ? '재직증명서 업로드 완료' : '재직증명서 업로드'}
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column */}
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">대출 신청 사유</h2>
+              <Controller
+                name="selectedReason"
+                control={control}
+                render={({ field }) => (
+                  <select
+                    {...field}
+                    className="w-full bg-white border border-gray-300 text-gray-900 rounded-[10px] h-12 px-4 focus:outline-none focus:ring-2 focus:ring-[#23E2C2]"
+                  >
+                    <option value="">신청 사유를 선택해주세요</option>
+                    {reasons.map((reason) => (
+                      <option key={reason} value={reason}>{reason}</option>
+                    ))}
+                  </select>
+                )}
+              />
+            </div>
+
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">상환 기간</h2>
+              <Controller
+                name="selectedPeriod"
+                control={control}
+                render={({ field }) => (
+                  <select
+                    {...field}
+                    className="w-full bg-white border border-gray-300 text-gray-900 rounded-[10px] h-12 px-4 focus:outline-none focus:ring-2 focus:ring-[#23E2C2]"
+                  >
+                    {periods.map((period) => (
+                      <option key={period} value={period}>{period}</option>
+                    ))}
+                  </select>
+                )}
+              />
+              <p className="text-sm text-gray-500 mt-2">* 상환기간은 정액 분할 상환으로 고정됩니다</p>
+            </div>
+
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">대출 금액</h2>
+              <Controller
+                name="loanAmount"
+                control={control}
+                rules={{ required: '대출 금액을 입력해주세요.' }}
+                render={({ field: { onChange, value } }) => (
+                  <input
+                    type="text"
+                    placeholder="대출 희망 금액 (원)"
+                    className="w-full px-4 py-2 bg-white border border-gray-300 rounded-[10px] text-sm focus:outline-none focus:ring-2 focus:ring-[#23E2C2]"
+                    value={formatNumber(value)}
+                    onChange={(e) => {
+                      onChange(e.target.value);
+                    }}
+                  />
+                )}
+              />
+            </div>
+
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">계좌 정보</h2>
+              <div className="border-2 border-dashed border-[#23E2C2] rounded-2xl p-6">
+                <div className="text-center mb-4">
+                  <Controller
+                    name="selectedAccount"
+                    control={control}
+                    render={({ field }) => (
+                      <span className="text-gray-700 font-medium">
+                        {field.value ? `${field.value.bankName} | ${field.value.accountNumber}` : '대출금 입금 계좌'}
+                      </span>
+                    )}
+                  />
+                </div>
+                <Button 
+                  type="button"
+                  onClick={fetchAccounts}
+                  className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-[10px] h-12 font-medium"
+                >
+                  {watch('selectedAccount') ? "입금 계좌 변경" : "입금 계좌 선택"}
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Bottom Button */}
-      <Button 
-        type="submit"
-        className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-[10px] h-14 text-lg mt-8 col-span-2"
-        disabled={isSubmitting}
-      >
-        {isSubmitting ? '처리 중...' : '신용 평가 받기'}
-      </Button>
+        {/* Bottom Button */}
+        <Button 
+          type="submit"
+          className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-[10px] h-14 text-lg font-medium mt-8"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? '처리 중...' : '신용 평가 받기'}
+        </Button>
 
-      {/* Account Selection Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>계좌 선택</DialogTitle>
-          </DialogHeader>
-          <div className="mt-4">
-            {accounts.map((account) => (
-              <Button
-                key={account.accountId}
-                onClick={() => account.accountId !== undefined ? handleAccountSelect(account) : null}
-                className="w-full mb-2 text-left justify-start"
-              >
-                {account.bankName} | {account.accountNumber}
-              </Button>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
-    </form>
+        {/* Account Selection Modal */}
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>계좌 선택</DialogTitle>
+            </DialogHeader>
+            <div className="mt-4">
+              {accounts.map((account) => (
+                <Button
+                  key={account.accountId}
+                  onClick={() => account.accountId !== undefined ? handleAccountSelect(account) : null}
+                  className="w-full mb-2 text-left justify-start hover:bg-gray-100"
+                >
+                  {account.bankName} | {account.accountNumber}
+                </Button>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
+      </form>
+    </div>
   )
 }
+

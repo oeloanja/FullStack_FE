@@ -156,31 +156,33 @@ export default function LoanHistoryPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-[#23E2C2] text-white rounded-lg">
-                <th className="py-3 px-4 text-left font-medium">대출 기간</th>
-                <th className="py-3 px-4 text-left font-medium">대출금</th>
-                <th className="py-3 px-4 text-left font-medium">금리</th>
-                <th className="py-3 px-4 text-right font-medium">대출상태</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredLoanHistory.map((loan) => (
-                <tr key={loan.loanId} className="border-b border-gray-100 last:border-0">
-                  <td className="py-4 px-4">{formatLoanPeriod(loan.createdAt, loan.term)}</td>
-                  <td className="py-4 px-4">{loan.loanAmount.toLocaleString()}원</td>
-                  <td className="py-4 px-4">{loan.intRate.toFixed(2)}%</td>
-                  <td className="py-4 px-4 text-right">
-                    <span className={getLoanStatusColor(loan.statusType)}>
-                      {loanStatusDescriptions[loan.statusType]}
-                    </span>
-                  </td>
+        <div className="overflow-x-auto -mx-6">
+          <div className="inline-block min-w-full align-middle px-6">
+            <table className="min-w-full whitespace-nowrap">
+              <thead>
+                <tr>
+                  <th className="py-3 px-4 text-left font-medium bg-[#23E2C2] text-white first:rounded-l-lg" style={{ minWidth: '150px' }}>대출 기간</th>
+                  <th className="py-3 px-4 text-left font-medium bg-[#23E2C2] text-white" style={{ minWidth: '120px' }}>대출금</th>
+                  <th className="py-3 px-4 text-left font-medium bg-[#23E2C2] text-white" style={{ minWidth: '100px' }}>금리</th>
+                  <th className="py-3 px-4 text-right font-medium bg-[#23E2C2] text-white last:rounded-r-lg" style={{ minWidth: '100px' }}>대출상태</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredLoanHistory.map((loan) => (
+                  <tr key={loan.loanId} className="border-b border-gray-100 last:border-0">
+                    <td className="py-4 px-4">{formatLoanPeriod(loan.createdAt, loan.term)}</td>
+                    <td className="py-4 px-4">{loan.loanAmount.toLocaleString()}원</td>
+                    <td className="py-4 px-4">{loan.intRate.toFixed(2)}%</td>
+                    <td className="py-4 px-4 text-right">
+                      <span className={getLoanStatusColor(loan.statusType)}>
+                        {loanStatusDescriptions[loan.statusType]}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

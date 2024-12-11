@@ -40,7 +40,6 @@ export default function PortfolioPage() {
         return
       }
 
-      // Fetch portfolio data
       const portfolioResponse = await api.get<InvestmentPortfolio>(
         `/api/v1/invest-service/portfolios/${user.userInvestId}`,
         {
@@ -50,7 +49,6 @@ export default function PortfolioPage() {
         }
       )
 
-      // Fetch investments data
       const investmentsResponse = await api.get<InvestmentResponse[]>(
         `/api/v1/invest-service/investments/list?userInvestorId=${user.userInvestId}`,
         {
@@ -69,7 +67,7 @@ export default function PortfolioPage() {
           id: inv.investmentId,
           groupName: `투자 그룹 ${inv.groupId}`,
           amount: inv.investmentAmount,
-          grade: '', // This will be empty as per the request
+          grade: '',
           expectedRate: inv.expectedReturnRate,
           actualRate: inv.actualReturnRate,
           status: mapInvestmentStatus(inv.investStatusType)
@@ -171,50 +169,52 @@ export default function PortfolioPage() {
             )}
           </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-[#23E2C2] text-white">
-              <tr>
-                <th className="py-3 px-4 text-center">대출그룹 이름</th>
-                <th className="py-3 px-4 text-center">투자금액</th>
-                <th className="py-3 px-4 text-center">평균신용도</th>
-                <th className="py-3 px-4 text-center">기대 수익률</th>
-                <th className="py-3 px-4 text-center">실제 수익률</th>
-                <th className="py-3 px-4 text-center">투자상태</th>
-                <th className="py-3 px-4 text-left"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredInvestments.map((investment) => (
-                <tr key={investment.id} className="border-b border-gray-100 last:border-0">
-                  <td className="py-4 px-4 text-center">{investment.groupName}</td>
-                  <td className="py-4 px-4 text-center">{investment.amount.toLocaleString()}원</td>
-                  <td className="py-4 px-4 text-center">{investment.grade}</td>
-                  <td className="py-4 px-4 text-center">{investment.expectedRate?.toFixed(2) ?? 0}%</td>
-                  <td className="py-4 px-4 text-center">{investment.actualRate?.toFixed(2) ?? 0}%</td>
-                  <td className="py-4 px-4 text-center">
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      investment.status === '투자 중' ? 'bg-green-100 text-green-800' :
-                      investment.status === '상환 완료' ? 'bg-gray-100 text-gray-800' :
-                      'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {investment.status}
-                    </span>
-                  </td>
-                  <td className="py-4 px-4">
-                    <Link href={`/invest-current/portfolio/detail?id=${investment.id}`}>
-                      <Button
-                        size="sm"
-                        className="bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white"
-                      >
-                        상세보기
-                      </Button>
-                    </Link>
-                  </td>
+        <div className="overflow-x-auto -mx-6">
+          <div className="inline-block min-w-full align-middle px-6">
+            <table className="min-w-full whitespace-nowrap">
+              <thead>
+                <tr>
+                  <th className="py-3 px-4 text-left font-medium bg-[#23E2C2] text-white first:rounded-l-lg" style={{ minWidth: '150px' }}>대출그룹 이름</th>
+                  <th className="py-3 px-4 text-right font-medium bg-[#23E2C2] text-white" style={{ minWidth: '120px' }}>투자금액</th>
+                  <th className="py-3 px-4 text-center font-medium bg-[#23E2C2] text-white" style={{ minWidth: '100px' }}>평균신용도</th>
+                  <th className="py-3 px-4 text-right font-medium bg-[#23E2C2] text-white" style={{ minWidth: '100px' }}>기대 수익률</th>
+                  <th className="py-3 px-4 text-right font-medium bg-[#23E2C2] text-white" style={{ minWidth: '100px' }}>실제 수익률</th>
+                  <th className="py-3 px-4 text-center font-medium bg-[#23E2C2] text-white" style={{ minWidth: '100px' }}>투자상태</th>
+                  <th className="py-3 px-4 text-center font-medium bg-[#23E2C2] text-white last:rounded-r-lg" style={{ minWidth: '100px' }}></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredInvestments.map((investment) => (
+                  <tr key={investment.id} className="border-b border-gray-100 last:border-0">
+                    <td className="py-4 px-4 text-left">{investment.groupName}</td>
+                    <td className="py-4 px-4 text-right">{investment.amount.toLocaleString()}원</td>
+                    <td className="py-4 px-4 text-center">{investment.grade}</td>
+                    <td className="py-4 px-4 text-right">{investment.expectedRate?.toFixed(2) ?? 0}%</td>
+                    <td className="py-4 px-4 text-right">{investment.actualRate?.toFixed(2) ?? 0}%</td>
+                    <td className="py-4 px-4 text-center">
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        investment.status === '투자 중' ? 'bg-green-100 text-green-800' :
+                        investment.status === '상환 완료' ? 'bg-gray-100 text-gray-800' :
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {investment.status}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      <Link href={`/invest-current/portfolio/detail?id=${investment.id}`}>
+                        <Button
+                          size="sm"
+                          className="bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white"
+                        >
+                          상세보기
+                        </Button>
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
