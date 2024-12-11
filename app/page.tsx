@@ -112,7 +112,14 @@ export default function Home() {
         </h2>
         <Card className="max-w-2xl mx-auto mt-6 sm:mt-8 p-4 sm:p-6">
           <div className="flex items-center justify-center mb-4">
-            <div className="w-full aspect-[4/3] bg-gray-100 rounded-lg" />
+            <div className="w-full aspect-[4/3] relative rounded-lg overflow-hidden">
+              <Image
+                src="/chatbot-image.png"
+                alt="AI Chatbot"
+                fill
+                className="object-cover"
+              />
+            </div>
           </div>
           <Button variant="outline" className="w-full text-black hover:bg-[#23E2C2]/90 rounded-full text-sm sm:text-base hover:text-white">
             챗봇 사용해보기
