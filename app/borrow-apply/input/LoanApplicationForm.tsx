@@ -11,7 +11,6 @@ import { toast } from 'react-hot-toast'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/dialog"
 import Script from 'next/script'
 import { formatNumber, parseNumber } from '@/utils/numberFormat';
-import AWS from 'aws-sdk';
 
 interface Account {
   accountId: number
@@ -106,47 +105,62 @@ export default function LoanApplicationForm() {
     setIsSubmitting(false);
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
-    const file = event.target.files?.[0]
+  const handleFileUpload = async (file: File, apiEndpoint: string) => {
     if (!file || file.type !== 'application/pdf') {
-        toast.error('PDF 파일만 업로드 가능합니다.')
-        return
+      toast.error('PDF 파일만 업로드 가능합니다.')
+      return
     }
 
     try {
-        const formData = new FormData();
-        formData.append('file', file);
+      // 1. S3에 파일 업로드
+      const formData = new FormData()
+      formData.append('file', file)
 
-        // 이미 만들어둔 NextJS API Route 사용
-        const uploadResponse = await fetch('/api/upload', {
-            method: 'POST',
-            body: formData
-        });
-        
-        const result = await uploadResponse.json();
-        console.log('S3 업로드 성공:', result.url);
+      const uploadResponse = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
 
-        setValue(fieldName, file)
-        toast.success('PDF 업로드 완료')
-        //     // 2. 파이썬 백엔드로 S3 URL 전송하여 PDF 처리 요청
-    //     const pdfResponse = await api.post('/api/v1/pdf-service/process', {
-    //         pdfUrl: uploadResult.Location
-    //     }, {
-    //         headers: {
-    //             'Authorization': `Bearer ${token}`
-    //         }
-    //     });
+      if (!uploadResponse.ok) {
+        throw new Error('S3 업로드에 실패했습니다.')
+      }
 
-    //     // 3. 처리된 PDF 데이터 저장
-    //     console.log('추출된 PDF 데이터:', pdfResponse.data);
-    //     setValue(fieldName, file)
-    //     toast.success('PDF 업로드 및 처리 완료')
+      const result = await uploadResponse.json()
+      console.log('S3 업로드 성공:', result.url)
 
+      // 2. 반환된 URL을 사용하여 API 호출
+      const apiResponse = await api.post(apiEndpoint, {
+        fileUrl: result.url,
+        phoneNumber: user?.phoneNumber || ''
+      })
+
+      if (!apiResponse.data) {
+        throw new Error('문서 처리에 실패했습니다.')
+      }
+
+      console.log('문서 처리 완료:', apiResponse.data)
+      toast.success('문서 업로드 및 처리 완료')
     } catch (error) {
-        console.error('Upload/Process error:', error)
-        toast.error('PDF 처리 중 오류가 발생했습니다.')
+      console.error('Upload/Process error:', error)
+      toast.error('문서 처리 중 오류가 발생했습니다.')
     }
-}
+  }
+
+  const handleIncomeFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      await handleFileUpload(file, '/api/v1/credit/document/income-proof')
+      setValue('incomeFile', file)
+    }
+  }
+
+  const handleEmploymentFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      await handleFileUpload(file, '/api/v1/credit/document/employment-certificate')
+      setValue('employmentFile', file)
+    }
+  }
 
   const fetchAccounts = async () => {
     if (!token) {
@@ -359,7 +373,7 @@ export default function LoanApplicationForm() {
                   type="file"
                   accept=".pdf"
                   ref={incomeFileInputRef}
-                  onChange={(e) => handleFileUpload(e, 'incomeFile')}
+                  onChange={handleIncomeFileUpload}
                   className="hidden"
                 />
                 <Button 
@@ -374,7 +388,7 @@ export default function LoanApplicationForm() {
                   type="file"
                   accept=".pdf"
                   ref={employmentFileInputRef}
-                  onChange={(e) => handleFileUpload(e, 'employmentFile')}
+                  onChange={handleEmploymentFileUpload}
                   className="hidden"
                 />
                 <Button 
@@ -397,15 +411,22 @@ export default function LoanApplicationForm() {
                 name="selectedReason"
                 control={control}
                 render={({ field }) => (
-                  <select
-                    {...field}
-                    className="w-full bg-white border border-gray-300 text-gray-900 rounded-[10px] h-12 px-4 focus:outline-none focus:ring-2 focus:ring-[#23E2C2]"
-                  >
-                    <option value="">신청 사유를 선택해주세요</option>
-                    {reasons.map((reason) => (
-                      <option key={reason} value={reason}>{reason}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      {...field}
+                      className="w-full bg-[#23E2C2] text-white border border-[#23E2C2] rounded-[10px] h-12 px-4 pr-10 focus:outline-none focus:ring-2 focus:ring-[#23E2C2] appearance-none custom-select text-center"
+                    >
+                      <option value="">신청 사유를 선택해주세요</option>
+                      {reasons.map((reason) => (
+                        <option key={reason} value={reason}>{reason}</option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
+                      <svg className="fill-current h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                      </svg>
+                    </div>
+                  </div>
                 )}
               />
             </div>
@@ -416,17 +437,24 @@ export default function LoanApplicationForm() {
                 name="selectedPeriod"
                 control={control}
                 render={({ field }) => (
-                  <select
-                    {...field}
-                    className="w-full bg-white border border-gray-300 text-gray-900 rounded-[10px] h-12 px-4 focus:outline-none focus:ring-2 focus:ring-[#23E2C2]"
-                  >
-                    {periods.map((period) => (
-                      <option key={period} value={period}>{period}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      {...field}
+                      className="w-full bg-[#23E2C2] text-white border border-[#23E2C2] rounded-[10px] h-12 px-4 pr-10 focus:outline-none focus:ring-2 focus:ring-[#23E2C2] appearance-none custom-select text-center"
+                    >
+                      {periods.map((period) => (
+                        <option key={period} value={period}>{period}</option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
+                      <svg className="fill-current h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                      </svg>
+                    </div>
+                  </div>
                 )}
               />
-              <p className="text-sm text-gray-500 mt-2">* 상환방식은 <a className="text-[#23E2C2]">정액 분할 상환</a>으로 고정됩니다</p>
+              <p className="text-sm text-gray-500 mt-2">* 상환방식은 <span className="text-[#23E2C2]">정액 분할 상환</span>으로 고정됩니다</p>
             </div>
 
             <div>
@@ -504,6 +532,26 @@ export default function LoanApplicationForm() {
           </DialogContent>
         </Dialog>
       </form>
+      <style jsx global>{`
+  .custom-select {
+    background-color: #23E2C2 !important;
+    color: white !important;
+  }
+
+  .custom-select option {
+    background-color: white !important;
+    color: #333 !important;
+    padding: 8px !important;
+  }
+
+  .custom-select option:hover,
+  .custom-select option:focus,
+  .custom-select option:active,
+  .custom-select option:checked {
+    background-color: #23E2C2 !important;
+    color: white !important;
+  }
+`}</style>
     </div>
   )
 }

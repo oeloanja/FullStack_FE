@@ -112,7 +112,7 @@ export default function Home() {
         <h2 className="text-xl sm:text-2xl font-bold">
           당신을 도울 <span className="text-[#23E2C2]">똑똑한 챗봇</span>
         </h2>
-        <Card className="max-w-2xl mx-auto mt-6 sm:mt-8 p-4 sm:p-6">
+        <Card className="max-w-3xl mx-auto mt-6 sm:mt-8 p-4 sm:p-6">
           <div className="flex items-center justify-center mb-4">
             <div className="w-full aspect-[4/3] relative rounded-lg overflow-hidden">
               <Image
