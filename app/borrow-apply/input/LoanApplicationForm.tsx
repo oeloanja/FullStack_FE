@@ -161,7 +161,6 @@ export default function LoanApplicationForm() {
       setValue('employmentFile', file)
     }
   }
-  }
 
   const fetchAccounts = async () => {
     if (!token) {
@@ -428,22 +427,6 @@ export default function LoanApplicationForm() {
                       </svg>
                     </div>
                   </div>
-                  <div className="relative">
-                    <select
-                      {...field}
-                      className="w-full bg-[#23E2C2] text-white border border-[#23E2C2] rounded-[10px] h-12 px-4 pr-10 focus:outline-none focus:ring-2 focus:ring-[#23E2C2] appearance-none custom-select text-center"
-                    >
-                      <option value="">신청 사유를 선택해주세요</option>
-                      {reasons.map((reason) => (
-                        <option key={reason} value={reason}>{reason}</option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
-                      <svg className="fill-current h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                      </svg>
-                    </div>
-                  </div>
                 )}
               />
             </div>
@@ -469,24 +452,8 @@ export default function LoanApplicationForm() {
                       </svg>
                     </div>
                   </div>
-                  <div className="relative">
-                    <select
-                      {...field}
-                      className="w-full bg-[#23E2C2] text-white border border-[#23E2C2] rounded-[10px] h-12 px-4 pr-10 focus:outline-none focus:ring-2 focus:ring-[#23E2C2] appearance-none custom-select text-center"
-                    >
-                      {periods.map((period) => (
-                        <option key={period} value={period}>{period}</option>
-                      ))}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
-                      <svg className="fill-current h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                      </svg>
-                    </div>
-                  </div>
                 )}
               />
-              <p className="text-sm text-gray-500 mt-2">* 상환방식은 <span className="text-[#23E2C2]">정액 분할 상환</span>으로 고정됩니다</p>
               <p className="text-sm text-gray-500 mt-2">* 상환방식은 <span className="text-[#23E2C2]">정액 분할 상환</span>으로 고정됩니다</p>
             </div>
 
@@ -565,26 +532,6 @@ export default function LoanApplicationForm() {
           </DialogContent>
         </Dialog>
       </form>
-      <style jsx global>{`
-  .custom-select {
-    background-color: #23E2C2 !important;
-    color: white !important;
-  }
-
-  .custom-select option {
-    background-color: white !important;
-    color: #333 !important;
-    padding: 8px !important;
-  }
-
-  .custom-select option:hover,
-  .custom-select option:focus,
-  .custom-select option:active,
-  .custom-select option:checked {
-    background-color: #23E2C2 !important;
-    color: white !important;
-  }
-`}</style>
       <style jsx global>{`
   .custom-select {
     background-color: #23E2C2 !important;
