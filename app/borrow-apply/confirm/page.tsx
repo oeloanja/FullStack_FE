@@ -1,19 +1,41 @@
-import { getLoanConditions } from './actions'
-import  LoanConfirmationForm  from './LoanConfirmationForm'
+"use client"
 
-export default async function Page({ searchParams }: { searchParams: { period: string } }) {
+import { useEffect, useState } from 'react'
+import { getLoanConditions } from './actions'
+import LoanConfirmationForm from './LoanConfirmationForm'
+
+type LoanConditions = {
+  target: number;
+  maxLoanAmount: number;
+  interestRate: number;
+  monthlyPayment: number;
+};
+
+export default function Page({ searchParams }: { searchParams: { period: string } }) {
+  const [loanConditions, setLoanConditions] = useState<LoanConditions | null>(null)
   const period = parseInt(searchParams.period) || 12 // 기본값 12개월
-  const loanConditions = await getLoanConditions(period)
+
+  useEffect(() => {
+    const fetchLoanConditions = async () => {
+      const conditions = await getLoanConditions(period)
+      setLoanConditions(conditions)
+    }
+    fetchLoanConditions()
+  }, [period])
+
+  if (!loanConditions) {
+    return <div>로딩 중...</div>
+  }
 
   return (
     <div className="flex flex-col min-h-screen p-4">
       <main className="flex-1 w-full max-w-5xl mx-auto">
         <h1 className="text-2xl font-bold text-center mb-8">대출 조건 확인</h1>
         
-        {/* Progress Bar */}
+        {/* 진행 상황 바 */}
         <div className="bg-gray-100 rounded-[60px] py-8 px-6 relative mb-12">
           <div className="flex justify-between items-center relative pt-2">
-            {/* Dotted line */}
+            {/* 점선 */}
             <div className="absolute top-[18px] left-0 right-0 flex justify-between px-8 pt-5">
               {[...Array(33)].map((_, i) => (
                 <div 
@@ -23,7 +45,7 @@ export default async function Page({ searchParams }: { searchParams: { period: s
               ))}
             </div>
 
-            {/* Progress circles and labels */}
+            {/* 진행 원형과 라벨 */}
             <div className="flex justify-between w-full relative z-10 pt-3">
               <div className="flex flex-col items-center">
                 <div className="w-10 h-10 rounded-full bg-[#23E2C2] mb-3" />
@@ -65,8 +87,9 @@ export default async function Page({ searchParams }: { searchParams: { period: s
           <div className="text-2xl font-bold text-[#23E2C2]">{period}개월</div>
         </div>
 
-        <LoanConfirmationForm period={period} />
+        <LoanConfirmationForm period={period} interestRate={loanConditions.interestRate} />
       </main>
     </div>
   )
 }
+

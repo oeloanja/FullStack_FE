@@ -1,17 +1,31 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useRef, useState, useEffect } from "react"
 import { useRouter } from 'next/navigation'
 import api from '@/utils/api'
 import { useAuth } from "@/contexts/AuthContext"
 import { toast } from 'react-hot-toast'
 import { formatNumber, parseNumber } from '@/utils/numberFormat'
 
-export default function LoanConfirmationForm({ period }: { period: number }) {
+export default function LoanConfirmationForm({ period, interestRate }: { period: number, interestRate: number }) {
   const router = useRouter()
   const loanAmountRef = useRef<HTMLInputElement>(null)
-  const { user, token } = useAuth()
+  const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    // localStorage에서 신용 평가 결과 가져오기
+    const storedData = localStorage.getItem('creditEvaluationResult')
+    if (storedData) {
+      const { target, maxLoanAmount } = JSON.parse(storedData)
+      if (target === 2) {
+        toast.error('대출이 거절되었습니다.')
+        router.push('/')
+      } else if (loanAmountRef.current) {
+        loanAmountRef.current.value = formatNumber(maxLoanAmount.toString())
+      }
+    }
+  }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +49,8 @@ export default function LoanConfirmationForm({ period }: { period: number }) {
       userBorrowId: user.userBorrowId,
       accountBorrowId: parseInt(localStorage.getItem('selectedAccountId') || '0'),
       loanAmount: loanAmountInWon,
-      term: period
+      term: period,
+      intRate: interestRate
     };
 
     if (!loanRequestData.accountBorrowId) {
@@ -47,17 +62,7 @@ export default function LoanConfirmationForm({ period }: { period: number }) {
     setIsLoading(true);
 
     try {
-      if (!token) {
-        toast.error('인증 토큰이 없습니다. 다시 로그인해주세요.');
-        return;
-      }
-
-      const response = await api.post('/api/v1/loan-service/register/success', loanRequestData, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await api.post('/api/v1/loan-service/register/success', loanRequestData);
 
       console.log('API 응답:', response.data);
 

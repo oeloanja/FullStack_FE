@@ -10,7 +10,7 @@ import api from '@/utils/api'
 import { toast } from 'react-hot-toast'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/dialog"
 import Script from 'next/script'
-import { formatNumber, parseNumber } from '@/utils/numberFormat';
+import { formatNumber, parseNumber } from '@/utils/numberFormat'
 
 interface Account {
   accountId: number
@@ -26,7 +26,7 @@ declare global {
 
 export default function LoanApplicationForm() {
   const router = useRouter()
-  const { user, token } = useAuth()
+  const { user } = useAuth()
   const incomeFileInputRef = useRef<HTMLInputElement>(null)
   const employmentFileInputRef = useRef<HTMLInputElement>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -60,49 +60,100 @@ export default function LoanApplicationForm() {
 
   const periods = ["3개월", "6개월", "12개월"]
 
+  const fetchMyData = async () => {
+    try {
+      if (!user?.phone) {
+        toast.error('사용자 정보를 찾을 수 없습니다.')
+        return
+      }
+
+      const response = await api.get('/api/v1/credit/mydata', {
+        params: { phoneNumber: user.phone }
+      })
+
+      if (response.data) {
+        toast.success('마이데이터가 성공적으로 불러와졌습니다.')
+      }
+    } catch (error) {
+      console.error('마이데이터 조회 중 오류 발생:', error)
+      console.log(user?.phone)
+      toast.error('마이데이터를 불러오는데 실패했습니다.')
+    }
+  }
+
   const onSubmit = async (data) => {
     console.log('onSubmit 함수 시작');
     if (isSubmitting) return;
     setIsSubmitting(true);
 
-    if (!selectedAccountId) {
-      toast.error('계좌를 선택해주세요.');
+    try {
+      if (!user?.userBorrowId) {
+        toast.error('사용자 정보를 찾을 수 없습니다.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!selectedAccountId) {
+        toast.error('계좌를 선택해주세요.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const loanAmount = parseNumber(data.loanAmount);
+      if (isNaN(loanAmount) || loanAmount <= 0) {
+        toast.error('올바른 대출 금액을 입력해주세요.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 선택된 기간을 월 단위의 숫자로 변환
+      const termInMonths = parseInt(data.selectedPeriod);
+
+      // 신용 평가 API 호출
+      const evaluateResponse = await api.post('/api/v1/credit/evaluate', {
+        phoneNumber: user.phone,
+        purpose: data.selectedReason,
+        amount: loanAmount,
+        term: termInMonths
+      });
+
+      // 대출 거절 케이스 처리
+      if (evaluateResponse.data?.target === 2) {
+        toast.error('대출이 거절되었습니다.');
+
+        // 거절 정보 저장
+        await api.post('/api/v1/loan-service/register/reject', {
+          userBorrowId: user.userBorrowId,
+          accountBorrowId: selectedAccountId,
+          loanAmount: loanAmount,
+          term: termInMonths
+        });
+
+        router.push('/');
+        return;
+      }
+
+      // 대출 신청 데이터 준비
+      const loanApplicationData = {
+        userBorrowId: user.userBorrowId,
+        accountBorrowId: selectedAccountId,
+        loanAmount: loanAmount,
+        term: termInMonths
+      };
+
+      // 로컬 스토리지에 데이터 저장
+      localStorage.setItem('loanApplicationData', JSON.stringify(loanApplicationData));
+      
+      console.log('저장된 대출 신청 데이터:', localStorage.getItem('loanApplicationData'));
+
+      // 신용 평가 페이지로 이동
+      router.push('/borrow-apply/credit');
+    } catch (error) {
+      console.error('신용 평가 중 오류 발생:', error);
+      toast.error('신용 평가 중 오류가 발생했습니다.');
+    } finally {
       setIsSubmitting(false);
-      return;
     }
-
-    if (!user?.userBorrowId) {
-      toast.error('사용자 정보를 찾을 수 없습니다.');
-      setIsSubmitting(false);
-      return;
-    }
-
-    const loanAmount = parseNumber(data.loanAmount);
-    if (isNaN(loanAmount) || loanAmount <= 0) {
-      toast.error('올바른 대출 금액을 입력해주세요.');
-      setIsSubmitting(false);
-      return;
-    }
-
-    // 선택된 기간을 월 단위의 숫자로 변환
-    const termInMonths = parseInt(data.selectedPeriod);
-
-    // 대출 신청 데이터 준비
-    const loanApplicationData = {
-      userBorrowId: user.userBorrowId,
-      accountBorrowId: selectedAccountId,
-      loanAmount: loanAmount,
-      term: termInMonths
-    };
-
-    // 로컬 스토리지에 데이터 저장
-    localStorage.setItem('loanApplicationData', JSON.stringify(loanApplicationData));
-    
-    console.log('저장된 대출 신청 데이터:', localStorage.getItem('loanApplicationData'));
-
-    // 신용 평가 페이지로 이동
-    router.push('/borrow-apply/credit');
-    setIsSubmitting(false);
   };
 
   const handleFileUpload = async (file: File, apiEndpoint: string) => {
@@ -131,7 +182,7 @@ export default function LoanApplicationForm() {
       // 2. 반환된 URL을 사용하여 API 호출
       const apiResponse = await api.post(apiEndpoint, {
         fileUrl: result.url,
-        phoneNumber: user?.phoneNumber || ''
+        phoneNumber: user?.phone || ''
       })
 
       if (!apiResponse.data) {
@@ -163,20 +214,16 @@ export default function LoanApplicationForm() {
   }
 
   const fetchAccounts = async () => {
-    if (!token) {
-      setError('인증 토큰이 없습니다. 다시 로그인해주세요.')
-      toast.error('인증 토큰이 없습니다. 다시 로그인해주세요.')
-      return
+    if (!user?.userBorrowId) {
+      setError('사용자 정보를 찾을 수 없습니다.');
+      toast.error('사용자 정보를 찾을 수 없습니다.');
+      return;
     }
 
     try {
       const response = await api.get(`/api/v1/user-service/accounts/borrow`, {
-        params: { userId: user?.userBorrowId },
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      })
+        params: { userId: user.userBorrowId }
+      });
       
       if (response.data && Array.isArray(response.data)) {
         const validAccounts = response.data.map(account => ({
@@ -284,6 +331,7 @@ export default function LoanApplicationForm() {
               <Button 
                 type="button"
                 className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-[10px] h-12 font-medium"
+                onClick={fetchMyData}
               >
                 마이데이터 한 번에 불러오기
               </Button>
