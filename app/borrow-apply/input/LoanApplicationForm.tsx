@@ -35,6 +35,11 @@ export default function LoanApplicationForm() {
   const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingMyData, setIsLoadingMyData] = useState(false);
+  const [isIncomeFileUploaded, setIsIncomeFileUploaded] = useState(false);
+  const [isEmploymentFileUploaded, setIsEmploymentFileUploaded] = useState(false); // Added state for employment file upload
+  const [isMyDataLoaded, setIsMyDataLoaded] = useState(false); // Added state for MyData loading
+
 
   const { control, handleSubmit, setValue, watch } = useForm({
     defaultValues: {
@@ -67,17 +72,22 @@ export default function LoanApplicationForm() {
         return
       }
 
+      setIsLoadingMyData(true);
+
       const response = await api.get('/api/v1/credit/mydata', {
         params: { phoneNumber: user.phone }
       })
 
       if (response.data) {
         toast.success('마이데이터가 성공적으로 불러와졌습니다.')
+        setIsMyDataLoaded(true); // Set isMyDataLoaded to true after successful fetch
       }
     } catch (error) {
       console.error('마이데이터 조회 중 오류 발생:', error)
       console.log(user?.phone)
       toast.error('마이데이터를 불러오는데 실패했습니다.')
+    } finally {
+      setIsLoadingMyData(false);
     }
   }
 
@@ -109,36 +119,14 @@ export default function LoanApplicationForm() {
       // 선택된 기간을 월 단위의 숫자로 변환
       const termInMonths = parseInt(data.selectedPeriod);
 
-      // 신용 평가 API 호출
-      const evaluateResponse = await api.post('/api/v1/credit/evaluate', {
-        phoneNumber: user.phone,
-        purpose: data.selectedReason,
-        amount: loanAmount,
-        term: termInMonths
-      });
-
-      // 대출 거절 케이스 처리
-      if (evaluateResponse.data?.target === 2) {
-        toast.error('대출이 거절되었습니다.');
-
-        // 거절 정보 저장
-        await api.post('/api/v1/loan-service/register/reject', {
-          userBorrowId: user.userBorrowId,
-          accountBorrowId: selectedAccountId,
-          loanAmount: loanAmount,
-          term: termInMonths
-        });
-
-        router.push('/');
-        return;
-      }
-
       // 대출 신청 데이터 준비
       const loanApplicationData = {
         userBorrowId: user.userBorrowId,
         accountBorrowId: selectedAccountId,
         loanAmount: loanAmount,
-        term: termInMonths
+        term: termInMonths,
+        purpose: data.selectedReason,
+        phoneNumber: user.phone
       };
 
       // 로컬 스토리지에 데이터 저장
@@ -149,8 +137,8 @@ export default function LoanApplicationForm() {
       // 신용 평가 페이지로 이동
       router.push('/borrow-apply/credit');
     } catch (error) {
-      console.error('신용 평가 중 오류 발생:', error);
-      toast.error('신용 평가 중 오류가 발생했습니다.');
+      console.error('대출 신청 중 오류 발생:', error);
+      toast.error('대출 신청 중 오류가 발생했습니다.');
     } finally {
       setIsSubmitting(false);
     }
@@ -182,7 +170,7 @@ export default function LoanApplicationForm() {
       // 2. 반환된 URL을 사용하여 API 호출
       const apiResponse = await api.post(apiEndpoint, {
         fileUrl: result.url,
-        phoneNumber: user?.phone || ''
+        phoneNumber: user?.phoneNumber || ''
       })
 
       if (!apiResponse.data) {
@@ -202,6 +190,7 @@ export default function LoanApplicationForm() {
     if (file) {
       await handleFileUpload(file, '/api/v1/credit/document/income-proof')
       setValue('incomeFile', file)
+      setIsIncomeFileUploaded(true);
     }
   }
 
@@ -210,6 +199,7 @@ export default function LoanApplicationForm() {
     if (file) {
       await handleFileUpload(file, '/api/v1/credit/document/employment-certificate')
       setValue('employmentFile', file)
+      setIsEmploymentFileUploaded(true); // Update employment file upload state
     }
   }
 
@@ -332,8 +322,9 @@ export default function LoanApplicationForm() {
                 type="button"
                 className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-[10px] h-12 font-medium"
                 onClick={fetchMyData}
+                disabled={isLoadingMyData || isMyDataLoaded} // Disable button if loading or already loaded
               >
-                마이데이터 한 번에 불러오기
+                {isLoadingMyData ? '진행 중...' : isMyDataLoaded ? '마이데이터 불러오기 완료' : '마이데이터 한 번에 불러오기'}
               </Button>
             </div>
 
@@ -428,6 +419,7 @@ export default function LoanApplicationForm() {
                   type="button"
                   className="flex-1 bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-[10px] h-12 font-medium"
                   onClick={() => incomeFileInputRef.current?.click()}
+                  disabled={isIncomeFileUploaded} // Disable button after upload
                 >
                   <Upload className="w-4 h-4 mr-2" />
                   {watch('incomeFile') ? '소득증명원 업로드 완료' : '소득증명원 업로드'}
@@ -443,6 +435,7 @@ export default function LoanApplicationForm() {
                   type="button"
                   className="flex-1 bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white rounded-[10px] h-12 font-medium"
                   onClick={() => employmentFileInputRef.current?.click()}
+                  disabled={!isIncomeFileUploaded || isEmploymentFileUploaded} // Disable button until income file is uploaded and disable after upload
                 >
                   <Upload className="w-4 h-4 mr-2" />
                   {watch('employmentFile') ? '재직증명서 업로드 완료' : '재직증명서 업로드'}

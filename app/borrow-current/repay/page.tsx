@@ -70,7 +70,7 @@ export default function RepaymentPage() {
         if (response.data) {
           const repayment = response.data.find(r => r.loanId === loanId);
           if (repayment) {
-            const total = parseFloat(repayment.repaymentPrincipal) + parseFloat(repayment.repaymentInterest);
+            const total = parseInt(repayment.repaymentPrincipal) + parseInt(repayment.repaymentInterest);
             setRequiredAmount(total);
           }
         }
