@@ -7,11 +7,12 @@ import { useAuth } from "@/contexts/AuthContext"
 import { toast } from 'react-hot-toast'
 import { formatNumber, parseNumber } from '@/utils/numberFormat'
 
-export default function LoanConfirmationForm({ period, interestRate }: { period: number, interestRate: number }) {
+export default function LoanConfirmationForm({ period, interestRate, maxLoanAmount }: { period: number, interestRate: number, maxLoanAmount: number }) {
   const router = useRouter()
   const loanAmountRef = useRef<HTMLInputElement>(null)
   const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
+  const [maxLoanAmountState, setMaxLoanAmount] = useState<number>(0);
 
   useEffect(() => {
     // localStorage에서 신용 평가 결과 가져오기
@@ -23,6 +24,7 @@ export default function LoanConfirmationForm({ period, interestRate }: { period:
         router.push('/')
       } else if (loanAmountRef.current) {
         loanAmountRef.current.value = formatNumber(maxLoanAmount.toString())
+        setMaxLoanAmount(maxLoanAmount) // maxLoanAmount 상태 설정
       }
     }
   }, [router])
@@ -50,7 +52,8 @@ export default function LoanConfirmationForm({ period, interestRate }: { period:
       accountBorrowId: parseInt(localStorage.getItem('selectedAccountId') || '0'),
       loanAmount: loanAmountInWon,
       term: period,
-      intRate: interestRate
+      intRate: interestRate,
+      loanLimit: maxLoanAmountState // 예상 한도 추가
     };
 
     if (!loanRequestData.accountBorrowId) {
