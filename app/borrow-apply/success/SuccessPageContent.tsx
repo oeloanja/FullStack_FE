@@ -150,7 +150,7 @@ export default function SuccessPageContent() {
   }
 
   return (
-    <div className="border shadow-sm bg-white rounded-2xl p-6 max-w-md w-full text-center">
+    <div className="border shadow-sm bg-white rounded-2xl p-6 max-w-md w-full text-center -mt-60">
       <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-6" />
       <h1 className="text-3xl font-bold text-gray-800 mb-4">대출 신청 마지막 단계!</h1>
       <p className="text-gray-600 mb-6">

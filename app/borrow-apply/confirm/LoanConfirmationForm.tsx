@@ -21,7 +21,7 @@ export default function LoanConfirmationForm({ period, interestRate, maxLoanAmou
       const { target, maxLoanAmount } = JSON.parse(storedData)
       if (target === 2) {
         toast.error('대출이 거절되었습니다.')
-        router.push('/')
+        router.push('/borrow-apply/deny')
       } else if (loanAmountRef.current) {
         loanAmountRef.current.value = formatNumber(maxLoanAmount.toString())
         setMaxLoanAmount(maxLoanAmount) // maxLoanAmount 상태 설정
