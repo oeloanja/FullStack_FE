@@ -9,9 +9,19 @@ type CreditEvaluationResult = {
 export async function getLoanConditions(period: number): Promise<CreditEvaluationResult & { monthlyPayment: number }> {
   // localStorage에서 신용 평가 결과 가져오기
   const storedData = typeof window !== 'undefined' ? localStorage.getItem('creditEvaluationResult') : null;
-  const evaluationResult: CreditEvaluationResult = storedData 
-    ? JSON.parse(storedData) 
-    : { target: 0, maxLoanAmount: 5000000, interestRate: 10 };
+  let evaluationResult: CreditEvaluationResult;
+
+  if (storedData) {
+    evaluationResult = JSON.parse(storedData);
+  } else {
+    evaluationResult = { target: 0, maxLoanAmount: 5000000, interestRate: 10 };
+  }
+
+  // target에 따라 maxLoanAmount와 interestRate 설정
+  if (evaluationResult.target === 1) {
+    evaluationResult.maxLoanAmount = 3000000;
+    evaluationResult.interestRate = 15;
+  }
 
   // 정액 분할 상환방식을 사용하여 월 상환금액 계산
   const monthlyPayment = calculateMonthlyPayment(evaluationResult.maxLoanAmount, evaluationResult.interestRate, period);
