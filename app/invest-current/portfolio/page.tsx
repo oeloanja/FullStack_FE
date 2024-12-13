@@ -63,15 +63,27 @@ export default function PortfolioPage() {
       }
 
       if (investmentsResponse.data) {
-        const mappedInvestments: Investment[] = investmentsResponse.data.map(inv => ({
-          id: inv.investmentId,
-          groupName: `투자 그룹 ${inv.groupId}`,
-          amount: inv.investmentAmount,
-          grade: '',
-          expectedRate: inv.expectedReturnRate,
-          actualRate: inv.actualReturnRate,
-          status: mapInvestmentStatus(inv.investStatusType)
-        }))
+        const mappedInvestments: Investment[] = await Promise.all(
+          investmentsResponse.data.map(async (inv) => {
+            const groupDetailResponse = await api.get(
+              `/api/v1/loan-group-service/detail/${inv.groupId}`,
+              {
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              }
+            );
+            return {
+              id: inv.investmentId,
+              groupName: `투자 그룹 ${inv.groupId}`,
+              amount: inv.investmentAmount,
+              grade: groupDetailResponse.data.riskLevel,
+              expectedRate: groupDetailResponse.data.intRate,
+              actualRate: inv.actualReturnRate,
+              status: mapInvestmentStatus(inv.investStatusType)
+            };
+          })
+        );
         setInvestments(mappedInvestments)
       }
     } catch (error) {
