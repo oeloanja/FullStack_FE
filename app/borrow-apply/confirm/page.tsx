@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { getLoanConditions } from './actions'
 import LoanConfirmationForm from './LoanConfirmationForm'
+import { useSearchParams } from 'next/navigation'
 
 type LoanConditions = {
   target: number;
@@ -11,9 +12,10 @@ type LoanConditions = {
   monthlyPayment: number;
 };
 
-export default function Page({ searchParams }: { searchParams: { period: string } }) {
+export default function Page() {
   const [loanConditions, setLoanConditions] = useState<LoanConditions | null>(null)
-  const period = parseInt(searchParams.period) || 12 // 기본값 12개월
+  const searchParams = useSearchParams()
+  const period = parseInt(searchParams.get('period') || '12') // 기본값 12개월
 
   useEffect(() => {
     const fetchLoanConditions = async () => {
@@ -87,7 +89,11 @@ export default function Page({ searchParams }: { searchParams: { period: string 
           <div className="text-2xl font-bold text-[#23E2C2]">{period}개월</div>
         </div>
 
-        <LoanConfirmationForm period={period} interestRate={loanConditions.interestRate} />
+        <LoanConfirmationForm 
+          period={period} 
+          interestRate={loanConditions.interestRate}
+          maxLoanAmount={loanConditions.maxLoanAmount}
+        />
       </main>
     </div>
   )
