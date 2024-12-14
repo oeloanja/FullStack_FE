@@ -55,24 +55,42 @@ export default function LoanHistoryPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { user, token } = useAuth()
+  const [creditRating, setCreditRating] = useState<string>('-')
 
   useEffect(() => {
-    const fetchLoanHistory = async () => {
+    const fetchData = async () => {
       setIsLoading(true)
       try {
-        if (!user?.userBorrowId) {
-          throw new Error('사용자 ID를 찾을 수 없습니다')
+        if (!user?.userBorrowId || !token) {
+          throw new Error('사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.')
         }
-        const response = await api.get(`/api/v1/loan-service/history/${user.userBorrowId}`, {
+        
+        // 신용등급 조회
+        const creditResponse = await api.get(`/api/v1/user-service/users/borrow`, {
+          params: { userId: user.userBorrowId },
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+        if (creditResponse.data && creditResponse.data.creditRating) {
+          const rating = creditResponse.data.creditRating
+          let grade = 'C'
+          if (rating === 1) grade = 'A'
+          else if (rating === 2) grade = 'B'
+          setCreditRating(grade)
+        }
+
+        // 대출 이력 조회
+        const loanResponse = await api.get(`/api/v1/loan-service/history/${user.userBorrowId}`, {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           }
         })
-        console.log('API 응답 데이터:', response.data)
-        setLoanHistory(response.data)
+        console.log('API 응답 데이터:', loanResponse.data)
+        setLoanHistory(loanResponse.data)
       } catch (err) {
-        console.error('대출 이력 조회 중 오류 발생:', err)
+        console.error('데이터 조회 중 오류 발생:', err)
         setError(err instanceof Error ? err.message : '오류가 발생했습니다')
       } finally {
         setIsLoading(false)
@@ -80,7 +98,7 @@ export default function LoanHistoryPage() {
     }
 
     if (user?.userBorrowId) {
-      fetchLoanHistory()
+      fetchData()
     }
   }, [user?.userBorrowId, token])
 
@@ -113,7 +131,7 @@ export default function LoanHistoryPage() {
           <p className="text-sm text-gray-500">최근 업데이트 : {new Date().toLocaleDateString()}</p>
         </div>
         <div className="w-16 h-16 rounded-full border-4 border-[#23E2C2] flex items-center justify-center">
-          <span className="text-3xl font-bold text-[#23E2C2]">B</span>
+          <span className="text-3xl font-bold text-[#23E2C2]">{creditRating}</span>
         </div>
       </div>
 

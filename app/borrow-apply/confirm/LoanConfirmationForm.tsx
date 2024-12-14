@@ -32,9 +32,6 @@ export default function LoanConfirmationForm({ period, interestRate, maxLoanAmou
           actualMaxLoanAmount = evaluatedMaxLoanAmount;
         }
         
-        if (loanAmountRef.current) {
-          loanAmountRef.current.value = formatNumber(actualMaxLoanAmount.toString())
-        }
         setMaxLoanAmount(actualMaxLoanAmount) // maxLoanAmount 상태 설정
       }
     }
@@ -111,6 +108,12 @@ export default function LoanConfirmationForm({ period, interestRate, maxLoanAmou
           type="text"
           placeholder="대출 희망 금액 입력 (원)"
           className="w-full h-12 px-4 py-2 bg-gray-50 border border-gray-200 rounded-[10px] text-sm"
+          onChange={(e) => {
+            const formatted = formatNumber(e.target.value);
+            if (loanAmountRef.current) {
+              loanAmountRef.current.value = formatted;
+            }
+          }}
         />
       </div>
       
