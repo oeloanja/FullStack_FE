@@ -35,7 +35,7 @@ export default function CreditEvaluationContent() {
           // 대출 거절 케이스 처리
           if (evaluateResponse.data.target === 2) {
             toast.error('대출이 거절되었습니다.');
-            router.push('/');
+            router.push('/borrow-apply/deny');
           } else {
             router.push(`/borrow-apply/confirm?period=${term}`);
           }
