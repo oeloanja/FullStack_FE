@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { Toast } from "@/components/toast"
 import { useAuth } from "@/contexts/AuthContext"
 import api from '@/utils/api'
+import { signIn } from "next-auth/react"
 
 interface LoginResponse {
   user: {
@@ -41,7 +42,6 @@ export default function LoginPage() {
           'Accept': 'application/json',
         }
       })
-
       return response.data
     } catch (error) {
       console.error('API 호출 중 오류 발생:', error)
@@ -152,6 +152,33 @@ export default function LoginPage() {
               </Link>
             </div>
           </form>
+
+          <div className="mt-8">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">간편 로그인</span>
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-3">
+              <button
+                onClick={() => signIn("naver")}
+                className="flex items-center justify-center w-full px-4 py-3 text-white bg-[#03C75A] rounded-md hover:bg-opacity-90 text-sm"
+              >
+                Naver 계정으로 로그인
+              </button>
+              
+              <button
+                onClick={() => signIn("kakao")}
+                className="flex items-center justify-center w-full px-4 py-3 text-gray-900 bg-[#FEE500] rounded-md hover:bg-opacity-90 text-sm"
+              >
+                Kakao 계정으로 로그인
+              </button>
+            </div>
+          </div>
         </div>
       </main>
       {toast && (
@@ -164,4 +191,3 @@ export default function LoginPage() {
     </div>
   )
 }
-
