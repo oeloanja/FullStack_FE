@@ -170,7 +170,7 @@ export default function LoanApplicationForm() {
       // 2. 반환된 URL을 사용하여 API 호출
       const apiResponse = await api.post(apiEndpoint, {
         fileUrl: result.url,
-        phoneNumber: user?.phoneNumber || ''
+        phoneNumber: user?.phone || ''
       })
 
       if (!apiResponse.data) {

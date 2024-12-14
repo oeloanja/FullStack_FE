@@ -1,24 +1,62 @@
 "use client"
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import api from '@/utils/api'
+import { toast } from 'react-hot-toast'
 
 export default function CreditEvaluationContent() {
   const router = useRouter()
+  const [isEvaluating, setIsEvaluating] = useState(true)
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const loanData = localStorage.getItem('loanApplicationData');
-      if (loanData) {
-        const { term } = JSON.parse(loanData);
-        router.push(`/borrow-apply/confirm?period=${term}`);
-      } else {
-        router.push('/borrow-apply/confirm');
-      }
-    }, 5000);
+    const evaluateCredit = async () => {
+      try {
+        const loanData = localStorage.getItem('loanApplicationData');
+        if (!loanData) {
+          toast.error('대출 신청 정보를 찾을 수 없습니다.');
+          router.push('/borrow-apply');
+          return;
+        }
 
-    return () => clearTimeout(timer);
+        const { phoneNumber, purpose, loanAmount, term } = JSON.parse(loanData);
+
+        // 신용 평가 API 호출
+        const evaluateResponse = await api.post('/api/v1/credit/evaluate', {
+          phoneNumber,
+          purpose,
+          amount: loanAmount,
+          term
+        });
+
+        if (evaluateResponse.data) {
+          localStorage.setItem('creditEvaluationResult', JSON.stringify(evaluateResponse.data));
+
+          // 대출 거절 케이스 처리
+          if (evaluateResponse.data.target === 2) {
+            toast.error('대출이 거절되었습니다.');
+            router.push('/');
+          } else {
+            router.push(`/borrow-apply/confirm?period=${term}`);
+          }
+        } else {
+          throw new Error('신용 평가 결과를 받지 못했습니다.');
+        }
+      } catch (error) {
+        console.error('신용 평가 중 오류 발생:', error);
+        toast.error('신용 평가 중 오류가 발생했습니다.');
+        router.push('/borrow-apply');
+      } finally {
+        setIsEvaluating(false);
+      }
+    };
+
+    evaluateCredit();
   }, [router]);
+
+  if (!isEvaluating) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col items-center justify-center space-y-8 mt-20">

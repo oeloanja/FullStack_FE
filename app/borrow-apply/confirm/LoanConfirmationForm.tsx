@@ -18,13 +18,24 @@ export default function LoanConfirmationForm({ period, interestRate, maxLoanAmou
     // localStorage에서 신용 평가 결과 가져오기
     const storedData = localStorage.getItem('creditEvaluationResult')
     if (storedData) {
-      const { target, maxLoanAmount } = JSON.parse(storedData)
+      const { target, maxLoanAmount: evaluatedMaxLoanAmount } = JSON.parse(storedData)
       if (target === 2) {
         toast.error('대출이 거절되었습니다.')
         router.push('/borrow-apply/deny')
-      } else if (loanAmountRef.current) {
-        loanAmountRef.current.value = formatNumber(maxLoanAmount.toString())
-        setMaxLoanAmount(maxLoanAmount) // maxLoanAmount 상태 설정
+      } else {
+        let actualMaxLoanAmount: number;
+        if (target === 0) {
+          actualMaxLoanAmount = 5000000; // 500만원
+        } else if (target === 1) {
+          actualMaxLoanAmount = 3000000; // 300만원
+        } else {
+          actualMaxLoanAmount = evaluatedMaxLoanAmount;
+        }
+        
+        if (loanAmountRef.current) {
+          loanAmountRef.current.value = formatNumber(actualMaxLoanAmount.toString())
+        }
+        setMaxLoanAmount(actualMaxLoanAmount) // maxLoanAmount 상태 설정
       }
     }
   }, [router])
@@ -50,7 +61,7 @@ export default function LoanConfirmationForm({ period, interestRate, maxLoanAmou
     const loanRequestData = {
       userBorrowId: user.userBorrowId,
       accountBorrowId: parseInt(localStorage.getItem('selectedAccountId') || '0'),
-      loanAmount: loanAmountInWon,
+      loanAmount: Math.min(loanAmountInWon, maxLoanAmountState),
       term: period,
       intRate: interestRate,
       loanLimit: maxLoanAmountState // 예상 한도 추가
