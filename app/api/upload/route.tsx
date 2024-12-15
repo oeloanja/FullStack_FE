@@ -20,8 +20,14 @@ export async function POST(request: NextRequest) {
     }
 
     const buffer = await file.arrayBuffer();
+    const bucketName = process.env.AWS_S3_BUCKET_NAME;
+    
+    if (!bucketName) {
+      throw new Error('환경 변수 AWS_S3_BUCKET_NAME이 설정되지 않았습니다.');
+    }
+
     const params = {
-      Bucket: process.env.AWS_S3_BUCKET_NAME,
+      Bucket: bucketName,
       Key: `uploads/${Date.now()}-${file.name}`,
       Body: Buffer.from(buffer),
       ContentType: file.type,

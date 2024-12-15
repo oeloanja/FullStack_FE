@@ -5,6 +5,7 @@ import { Button } from "@/components/button"
 import { useRouter } from 'next/navigation'
 import { Toast } from "@/components/toast"
 import api from '@/utils/api'
+import axios, { AxiosError } from 'axios'
 
 interface SignupResponse {
   success: boolean;
@@ -36,9 +37,19 @@ async function registerUser(userData: any): Promise<SignupResponse> {
     return { success: true, message: '회원가입이 완료되었습니다.' };
   } catch (error) {
     console.log(error)
-    if (error instanceof Error) {
-      return { success: false, message: error.response?.data?.message || '알 수 없는 오류가 발생했습니다.' };
+    
+    // AxiosError인지 확인
+    if (axios.isAxiosError(error)) {
+      return {
+        success: false,
+        message: error.response?.data?.message || '알 수 없는 오류가 발생했습니다.',
+      };
     }
+
+    if (error instanceof Error) {
+      return { success: false, message: error.message || '알 수 없는 오류가 발생했습니다.' };
+    }
+
     return { success: false, message: '알 수 없는 오류가 발생했습니다.' };
   }
 }

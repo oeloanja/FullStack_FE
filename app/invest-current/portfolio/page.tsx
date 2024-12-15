@@ -8,6 +8,12 @@ import { useAuth } from "@/contexts/AuthContext"
 import api from '@/utils/api'
 import { toast } from 'react-hot-toast'
 import type { Investment, InvestmentPortfolio, InvestmentResponse } from '@/types/portfolio'
+import { AxiosError } from "axios"
+
+// AxiosError 타입을 확인하는 유틸리티 함수
+function isAxiosError(error: unknown): error is AxiosError {
+  return (error as AxiosError).isAxiosError !== undefined;
+}
 
 export default function PortfolioPage() {
   const { user, token } = useAuth()
@@ -88,8 +94,8 @@ export default function PortfolioPage() {
       }
     } catch (error) {
       console.error('데이터 조회 중 오류:', error)
-      if (error.response?.status === 404) {
-        toast.error('포트폴리오가 존재하지 않습니다. 투자를 먼저 진행해주세요.')
+      if (isAxiosError(error) && error.response?.status === 404) {
+        toast.error("포트폴리오가 존재하지 않습니다. 투자를 먼저 진행해주세요.");
       } else {
         toast.error('데이터를 불러오는데 실패했습니다.')
       }
