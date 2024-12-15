@@ -95,3 +95,7 @@ export default function BorrowConfirmComponent() {
           maxLoanAmount={loanConditions.maxLoanAmount}
         />
       </main>
+    </div>
+  )
+}
+

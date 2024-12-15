@@ -6,4 +6,4 @@ const InvestmentDetailComponent = dynamic(() => import('./InvestmentDetailCompon
   ssr: false 
 })
 
-export default Investme
+export default InvestmentDetailComponent

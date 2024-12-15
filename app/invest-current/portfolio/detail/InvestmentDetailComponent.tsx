@@ -249,4 +249,6 @@ export default function InvestmentDetailComponent() {
         </table>
       </div>
     </div>
-  
+  )
+}
+
