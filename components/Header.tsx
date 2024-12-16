@@ -75,7 +75,7 @@ export function Header() {
                 포트폴리오
               </Link>
               <Link href="/invest-my-page" className="text-gray-600 hover:text-[#4FFFD7] transition-colors">
-                마이 페이지
+                마이페이지
               </Link>
             </>
           )}
