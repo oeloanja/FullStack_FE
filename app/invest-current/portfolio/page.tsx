@@ -84,7 +84,7 @@ export default function PortfolioPage() {
               groupName: `투자 그룹 ${inv.groupId}`,
               amount: inv.investmentAmount,
               grade: groupDetailResponse.data.riskLevel,
-              expectedRate: groupDetailResponse.data.intRate,
+              expectedRate: (groupDetailResponse.data.intRate)*0.75,
               actualRate: inv.actualReturnRate,
               status: mapInvestmentStatus(inv.investStatusType)
             };

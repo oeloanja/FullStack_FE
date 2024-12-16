@@ -125,7 +125,7 @@ export default function InvestmentSelection() {
           userInvestorId: userInvestId,
           accountInvestorId: accountInvestId,
           investmentAmount: parseNumber(inv.amount!),
-          expectedReturnRate: inv.intRate
+          expectedReturnRate: ((inv.intRate)*0.75)
         }))
 
       if (selectedInvestments.length === 0) {
@@ -178,7 +178,7 @@ export default function InvestmentSelection() {
                 <Button
                   className="flex-1 bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white h-12 text-sm"
                 >
-                  {(investment.groupName).match(/^.{5}/)?.[0] || ''} | 위험도: {getRiskLevelText(investment.riskLevel)} | 예상수익률: {investment.intRate.toFixed(2)}%
+                  {(investment.groupName).match(/^.{5}/)?.[0] || ''} | 위험도: {getRiskLevelText(investment.riskLevel)} | 예상수익률: {((investment.intRate)*0.75).toFixed(2)}%
                 </Button>
                 <div className="w-48">
                   <input
