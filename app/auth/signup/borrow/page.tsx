@@ -5,6 +5,7 @@ import { Button } from "@/components/button"
 import { useRouter } from 'next/navigation'
 import { Toast } from "@/components/toast"
 import api from '@/utils/api'
+import axios, { AxiosError } from 'axios'
 
 interface SignupResponse {
   success: boolean;
@@ -36,8 +37,17 @@ async function registerUser(userData: any): Promise<SignupResponse> {
     return { success: true, message: '회원가입이 완료되었습니다.' };
   } catch (error) {
     console.log(error)
+
+    // AxiosError인지 확인
+    if (axios.isAxiosError(error)) {
+      return {
+        success: false,
+        message: error.response?.data?.message || '알 수 없는 오류가 발생했습니다.',
+      };
+    }
+
     if (error instanceof Error) {
-      return { success: false, message: error.response?.data?.message || '알 수 없는 오류가 발생했습니다.' };
+      return { success: false, message: error.message || '알 수 없는 오류가 발생했습니다.' };
     }
     return { success: false, message: '알 수 없는 오류가 발생했습니다.' };
   }
@@ -279,7 +289,7 @@ export default function BorrowerSignup() {
                     본인 확인 서비스 제공을 위해 개인정보 취급 위탁 동의를 받고자 합니다. 아래 보기에서 동의 여부를 선택해 주세요.
                   </p>
                   <ul className="list-disc pl-5 mb-4">
-                    <li>수탁자: (주)회사명</li>
+                    <li>수탁자: (주)BilliT</li>
                     <li>개인정보 수집 및 이용 목적: 회원가입 등에 필요한 본인확인 서비스 제공</li>
                     <li>수집하는 개인정보 항목: 이름, 연락처</li>
                     <li>개인정보 보유 및 이용 기간: 수집 일로부터 3년</li>

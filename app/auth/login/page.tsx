@@ -10,12 +10,12 @@ import api from '@/utils/api'
 
 interface LoginResponse {
   user: {
-    id: number
+    id: string
     email: string
     userName: string
     phone: string
-    userBorrowId?: number
-    userInvestId?: number
+    userBorrowId?: string
+    userInvestId?: string
   }
   accessToken: string
 }

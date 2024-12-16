@@ -14,8 +14,8 @@ export interface Investment {
   grade: string
   expectedRate: number
   actualRate: number
-  period: string
-  status: '투자 중' | '상환 완료' | '투자 대기'
+  //period: string
+  status: '투자 중' | '상환 완료' | '투자 대기' | '투자 취소'
 }
 
 export interface InvestmentDetail extends Investment {

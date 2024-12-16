@@ -52,8 +52,8 @@ export default function LoanApplicationForm() {
       selectedReason: "",
       selectedPeriod: "6개월",
       selectedAccount: null as Account | null,
-      incomeFile: null,
-      employmentFile: null,
+      incomeFile: null as File | null,
+      employmentFile: null as File | null,
       loanAmount: ""
     }
   })
@@ -301,7 +301,7 @@ export default function LoanApplicationForm() {
     if (window.daum && window.daum.Postcode) {
       setIsScriptLoaded(true);
     } else {
-      const script = document.querySelector('script[src*="daumcdn"]');
+      const script = document.querySelector('script[src*="daumcdn"]') as HTMLScriptElement | null;
       if (script) {
         script.onload = () => setIsScriptLoaded(true);
       }
