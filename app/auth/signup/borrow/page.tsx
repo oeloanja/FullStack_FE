@@ -289,7 +289,7 @@ export default function BorrowerSignup() {
                     본인 확인 서비스 제공을 위해 개인정보 취급 위탁 동의를 받고자 합니다. 아래 보기에서 동의 여부를 선택해 주세요.
                   </p>
                   <ul className="list-disc pl-5 mb-4">
-                    <li>수탁자: (주)회사명</li>
+                    <li>수탁자: (주)BilliT</li>
                     <li>개인정보 수집 및 이용 목적: 회원가입 등에 필요한 본인확인 서비스 제공</li>
                     <li>수집하는 개인정보 항목: 이름, 연락처</li>
                     <li>개인정보 보유 및 이용 기간: 수집 일로부터 3년</li>

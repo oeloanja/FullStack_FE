@@ -19,7 +19,7 @@ export default function Home() {
                 <span className="text-[#23E2C2]">BilliT</span>
               </h2>
               <p className="text-sm sm:text-base text-gray-600 mt-2 sm:mt-4">
-                직장인 신용대출 최저 5.0%<br className="sm:hidden" /> 최대 500만원
+                외국인 신용대출 최저 10.0%<br className="sm:hidden" /> 최대 500만원
               </p>
             </div>
             <Link href="/auth/select-type">
