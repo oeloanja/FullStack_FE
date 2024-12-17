@@ -7,6 +7,7 @@ import Link from "next/link"
 import { useAuth } from "@/contexts/AuthContext"
 import { useRouter, useSearchParams } from 'next/navigation'
 import api from '@/utils/api'
+import { formatNumber } from "@/utils/numberFormat"
 
 type BankAccount = {
   id: number
@@ -251,7 +252,7 @@ export default function InvestorMyPage({ verificationToken }: { verificationToke
                     <Check className="w-4 h-4 mr-1" />
                     계좌주: {account.accountHolder}
                   </div>
-                  <div className="text-lg font-medium">{account.balance}</div>
+                  <div className="text-lg font-medium"><a className="text-bold">{formatNumber(account.balance)}</a>원</div>
                   <Button
                     onClick={() => handleDeleteAccount(account.id)}
                     variant="outline"
