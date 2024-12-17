@@ -1,6 +1,11 @@
 import axios from 'axios';
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://billit.kro.kr/';
+
+console.log('환경변수 체크:', {
+  NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  API_BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://billit.kro.kr/'
+});
 
 const api = axios.create({
   baseURL: API_BASE_URL,

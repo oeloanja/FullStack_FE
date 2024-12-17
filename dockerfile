@@ -1,23 +1,22 @@
-# Base image
-FROM node:18 as build
-
-# Set working directory
+# Build stage
+FROM node:18 as builder 
 WORKDIR /app
-
-# Copy package.json and package-lock.json
 COPY package.json package-lock.json ./
-
-# Install dependencies using npm
 RUN npm install
-
-# Copy all project files
 COPY . .
-
-# Build the Next.js application
+ARG NEXT_PUBLIC_API_URL=http://gateway-service:8080
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 RUN npm run build
 
-# Expose the port that the Next.js app runs on
+# Production stage
+FROM node:18-slim
+WORKDIR /app
+# 환경변수 추가
+ENV NEXT_PUBLIC_API_URL=http://gateway-service:8080
+COPY --from=builder /app/next.config.ts ./
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
 EXPOSE 3000
-
-# Start the Next.js application
 CMD ["npm", "start"]
