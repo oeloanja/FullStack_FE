@@ -44,7 +44,7 @@ export function ChatBot() {
       try {
         const response = await api.post('/chat/open', {
           uuid: userId,
-          phone: user?.phone
+          user_pn: user?.phone
         })
 
         if (response.status !== 200) {

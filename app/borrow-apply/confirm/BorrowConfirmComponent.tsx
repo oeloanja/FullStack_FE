@@ -19,8 +19,12 @@ export default function BorrowConfirmComponent() {
 
   useEffect(() => {
     const fetchLoanConditions = async () => {
-      const conditions = await getLoanConditions(period)
-      setLoanConditions(conditions)
+      const storedData = localStorage.getItem('creditEvaluationResult')
+      if (storedData) {
+        const { target } = JSON.parse(storedData)
+        const conditions = await getLoanConditions(period, target)
+        setLoanConditions(conditions)
+      }
     }
     fetchLoanConditions()
   }, [period])

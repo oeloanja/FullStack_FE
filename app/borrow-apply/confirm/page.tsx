@@ -1,9 +1,12 @@
 'use client'
 
-import dynamic from 'next/dynamic'
+import { Suspense } from 'react'
+import BorrowConfirmComponent from './BorrowConfirmComponent'
 
-const BorrowConfirmComponent = dynamic(() => import('./BorrowConfirmComponent'), { 
-  ssr: false 
-})
-
-export default BorrowConfirmComponent
+export default function BorrowConfirmPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <BorrowConfirmComponent />
+    </Suspense>
+  )
+}

@@ -6,25 +6,33 @@ type CreditEvaluationResult = {
   interestRate: number;
 };
 
-export async function getLoanConditions(period: number): Promise<CreditEvaluationResult & { monthlyPayment: number }> {
-  // localStorage에서 신용 평가 결과 가져오기
-  const storedData = typeof window !== 'undefined' ? localStorage.getItem('creditEvaluationResult') : null;
+export async function getLoanConditions(
+  period: number,
+  target: 0 | 1 | 2
+): Promise<CreditEvaluationResult & { monthlyPayment: number }> {
   let evaluationResult: CreditEvaluationResult;
 
-  if (storedData) {
-    evaluationResult = JSON.parse(storedData);
+  // target 값에 따라 대출 조건 설정
+  if (target === 1) {
+    evaluationResult = { 
+      target: 1, 
+      maxLoanAmount: 3000000, 
+      interestRate: 15 
+    };
   } else {
-    evaluationResult = { target: 0, maxLoanAmount: 5000000, interestRate: 10 };
-  }
-
-  // target에 따라 maxLoanAmount와 interestRate 설정
-  if (evaluationResult.target === 1) {
-    evaluationResult.maxLoanAmount = 3000000;
-    evaluationResult.interestRate = 15;
+    evaluationResult = { 
+      target: 0, 
+      maxLoanAmount: 5000000, 
+      interestRate: 10 
+    };
   }
 
   // 정액 분할 상환방식을 사용하여 월 상환금액 계산
-  const monthlyPayment = calculateMonthlyPayment(evaluationResult.maxLoanAmount, evaluationResult.interestRate, period);
+  const monthlyPayment = calculateMonthlyPayment(
+    evaluationResult.maxLoanAmount,
+    evaluationResult.interestRate,
+    period
+  );
 
   return {
     ...evaluationResult,
@@ -45,4 +53,3 @@ function calculateMonthlyPayment(principal: number, annualInterestRate: number, 
 
   return Math.round(monthlyPayment);
 }
-
