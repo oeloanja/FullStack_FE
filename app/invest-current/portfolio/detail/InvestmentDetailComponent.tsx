@@ -211,7 +211,7 @@ export default function InvestmentDetailComponent() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">수익금</span>
-                  <span>{settlement.settlementProfit.toLocaleString()}원</span>
+                  <span>{settlement.settlementProfit.toFixed(0).toLocaleString()}원</span>
                 </div>
               </div>
             ))
