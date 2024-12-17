@@ -173,7 +173,7 @@ export default function InvestorMyPage({ verificationToken }: { verificationToke
     return (
       <div className="text-center mt-8">
         <p>사용자 정보를 불러올 수 없습니다.</p>
-        <Button onClick={() => router.push('/login')} className="mt-4">
+        <Button onClick={() => router.push('/auth/login')} className="mt-4">
           로그인 페이지로 이동
         </Button>
       </div>
