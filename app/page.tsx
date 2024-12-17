@@ -52,7 +52,7 @@ export default function Home() {
         </div>
         <div className="relative h-8 sm:h-14 w-24 sm:w-32">
           <Image
-            src="/HK-Logo.png"
+            src="/HK-logo.png"
             alt="HK Logo"
             fill
             className="object-contain "
