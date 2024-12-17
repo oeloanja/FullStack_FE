@@ -251,6 +251,7 @@ export default function BorrowerMyPage({ verificationToken }: { verificationToke
                     <Check className="w-4 h-4 mr-1" />
                     계좌주: {account.accountHolder}
                   </div>
+                  <div className="text-lg font-medium">{account.balance}</div>
                   <Button
                     onClick={() => handleDeleteAccount(account.id)}
                     variant="outline"
