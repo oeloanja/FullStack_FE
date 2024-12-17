@@ -149,7 +149,7 @@ export default function PortfolioPage() {
           <div>
             <p className="text-sm text-gray-500">총 수익금</p>
             <p className="text-xl font-bold text-[#23E2C2]">
-              {portfolio?.totalReturnValue.toLocaleString()}원
+              {portfolio?.totalReturnValue.toFixed(0).toLocaleString()}원
             </p>
           </div>
         </div>
@@ -194,7 +194,7 @@ export default function PortfolioPage() {
                 <tr>
                   <th className="py-3 px-4 text-left font-medium bg-[#23E2C2] text-white first:rounded-l-lg" style={{ minWidth: '150px' }}>대출그룹 이름</th>
                   <th className="py-3 px-4 text-right font-medium bg-[#23E2C2] text-white" style={{ minWidth: '120px' }}>투자금액</th>
-                  <th className="py-3 px-4 text-center font-medium bg-[#23E2C2] text-white" style={{ minWidth: '100px' }}>평균위험도</th>
+                  <th className="py-3 px-4 text-center font-medium bg-[#23E2C2] text-white" style={{ minWidth: '100px' }}>그룹 위험도</th>
                   <th className="py-3 px-4 text-right font-medium bg-[#23E2C2] text-white" style={{ minWidth: '100px' }}>기대 수익률</th>
                   <th className="py-3 px-4 text-right font-medium bg-[#23E2C2] text-white" style={{ minWidth: '100px' }}>실제 수익률</th>
                   <th className="py-3 px-4 text-center font-medium bg-[#23E2C2] text-white" style={{ minWidth: '100px' }}>투자상태</th>

@@ -7,6 +7,7 @@ import Link from "next/link"
 import { useAuth } from "@/contexts/AuthContext"
 import { useRouter, useSearchParams } from 'next/navigation'
 import api from '@/utils/api'
+import { formatNumber } from "@/utils/numberFormat"
 
 type BankAccount = {
   id: number
@@ -172,7 +173,7 @@ export default function InvestorMyPage({ verificationToken }: { verificationToke
     return (
       <div className="text-center mt-8">
         <p>사용자 정보를 불러올 수 없습니다.</p>
-        <Button onClick={() => router.push('/login')} className="mt-4">
+        <Button onClick={() => router.push('/auth/login')} className="mt-4">
           로그인 페이지로 이동
         </Button>
       </div>
@@ -251,7 +252,7 @@ export default function InvestorMyPage({ verificationToken }: { verificationToke
                     <Check className="w-4 h-4 mr-1" />
                     계좌주: {account.accountHolder}
                   </div>
-                  <div className="text-lg font-medium">{account.balance}</div>
+                  <div className="text-lg font-medium"><a className="text-bold">{formatNumber(account.balance)}</a>원</div>
                   <Button
                     onClick={() => handleDeleteAccount(account.id)}
                     variant="outline"
