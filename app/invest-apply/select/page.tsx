@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import { Button } from "@/components/button"
 import { ArrowUpDown } from 'lucide-react'
@@ -8,7 +7,6 @@ import api from '@/utils/api'
 import { useAuth } from "@/contexts/AuthContext"
 import { toast } from 'react-hot-toast'
 import { formatNumber, parseNumber } from '@/utils/numberFormat'
-
 interface LoanGroup {
   groupId: number
   groupName: string
@@ -17,7 +15,6 @@ interface LoanGroup {
   isFulled: boolean
   amount?: string
 }
-
 export default function InvestmentSelection() {
   const [investments, setInvestments] = useState<LoanGroup[]>([])
   const [sortOrder, setSortOrder] = useState<'high' | 'low'>('high')
@@ -25,7 +22,6 @@ export default function InvestmentSelection() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
   const { token } = useAuth()
-
   useEffect(() => {
     const fetchInvestments = async () => {
       setIsLoading(true)
@@ -36,22 +32,18 @@ export default function InvestmentSelection() {
           router.push('/invest-apply/input')
           return
         }
-
         const { riskLevel } = JSON.parse(investData)
         const riskLevelOrdinal = getRiskLevelOrdinal(riskLevel)
-
         if (!token) {
           toast.error('인증 토큰이 없습니다. 다시 로그인해주세요.')
           router.push('/login')
           return
         }
-
         const response = await api.get(`/api/v1/loan-group-service/list/${riskLevelOrdinal}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         })
-
         if (response.data && Array.isArray(response.data)) {
           setInvestments(response.data)
         } else {
@@ -64,25 +56,20 @@ export default function InvestmentSelection() {
         setIsLoading(false)
       }
     }
-
     fetchInvestments()
   }, [router, token])
-
   const handleAmountChange = (id: number, value: string) => {
     const formattedValue = formatNumber(value)
-    setInvestments(investments.map(inv => 
+    setInvestments(investments.map(inv =>
       inv.groupId === id ? { ...inv, amount: formattedValue } : inv
     ))
   }
-
   const toggleSortOrder = () => {
     setSortOrder(sortOrder === 'high' ? 'low' : 'high')
   }
-
-  const sortedInvestments = [...investments].sort((a, b) => 
+  const sortedInvestments = [...investments].sort((a, b) =>
     sortOrder === 'high' ? b.intRate - a.intRate : a.intRate - b.intRate
   )
-
   const getRiskLevelOrdinal = (level: string) => {
     switch (level) {
       case "높음": return 2;
@@ -91,7 +78,6 @@ export default function InvestmentSelection() {
       default: return 1;
     }
   };
-
   const getRiskLevelText = (level: string) => {
     switch (level) {
       case "HIGH": return "높음";
@@ -100,7 +86,6 @@ export default function InvestmentSelection() {
       default: return "중간";
     }
   };
-
   const handleSubmit = async () => {
     setIsSubmitting(true)
     try {
@@ -109,15 +94,12 @@ export default function InvestmentSelection() {
         router.push('/login')
         return
       }
-
       const investData = localStorage.getItem('investApplicationData')
       if (!investData) {
         toast.error('투자 정보를 찾을 수 없습니다.')
         return
       }
-
       const { userInvestId, accountInvestId } = JSON.parse(investData)
-
       const selectedInvestments = investments
         .filter(inv => inv.amount && parseNumber(inv.amount) > 0)
         .map(inv => ({
@@ -127,17 +109,14 @@ export default function InvestmentSelection() {
           investmentAmount: parseNumber(inv.amount!),
           expectedReturnRate: ((inv.intRate)*0.75)
         }))
-
       if (selectedInvestments.length === 0) {
         toast.error('최소 하나 이상의 투자 상품을 선택해주세요.')
         return
       }
-
       localStorage.setItem('selectedInvestments', JSON.stringify({
         investments: selectedInvestments,
         totalAmount: selectedInvestments.reduce((sum, inv) => sum + inv.investmentAmount, 0)
       }))
-
       router.push('/invest-apply/success')
     } catch (error) {
       console.error('투자 선택 중 오류 발생:', error)
@@ -146,16 +125,13 @@ export default function InvestmentSelection() {
       setIsSubmitting(false)
     }
   }
-
   if (isLoading) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>
   }
-
   return (
     <div className="flex flex-col min-h-screen p-4">
       <main className="flex-1 w-full max-w-3xl mx-auto">
-        <h1 className="text-5xl font-bold text-center mb-8">투자 상품 선택</h1>
-        
+        <h1 className="text-3xl sm:text-5xl font-bold text-center mb-8">투자 상품 선택</h1>
         <div className="space-y-6">
           {/* Header */}
           <div className="flex justify-between items-center">
@@ -163,24 +139,24 @@ export default function InvestmentSelection() {
             <Button
               variant="outline"
               size="sm"
-              className="text-[#23E2C2] border-[#23E2C2] hover:bg-[#23E2C2] hover:text-white"
+              className="text-[#23E2C2] border-[#23E2C2] hover:bg-[#23E2C2] hover:text-white text-xs sm:text-sm"
               onClick={toggleSortOrder}
             >
-              <ArrowUpDown className="h-4 w-4 mr-2" />
-              수익률 {sortOrder === 'high' ? '높은' : '낮은'} 순
+              <ArrowUpDown className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">수익률 </span>{sortOrder === 'high' ? '높은' : '낮은'}<span className="hidden sm:inline"> 순</span>
             </Button>
           </div>
-
           {/* Investment Options */}
           <div className="space-y-4">
             {sortedInvestments.map((investment) => (
-              <div key={investment.groupId} className="flex gap-4">
+              <div key={investment.groupId} className="flex flex-col sm:flex-row gap-2 sm:gap-4">
                 <Button
-                  className="flex-1 bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white h-12 text-sm"
+                  className="flex-1 bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white h-12 text-xs sm:text-sm"
                 >
-                  {(investment.groupName).match(/^.{5}/)?.[0] || ''} | 위험도: {getRiskLevelText(investment.riskLevel)} | 예상수익률: {((investment.intRate)*0.75).toFixed(2)}%
+                  <span className="hidden sm:inline">{(investment.groupName).match(/^.{5}/)?.[0] || ''} | </span>
+                  위험도: {getRiskLevelText(investment.riskLevel)} | 수익률: {((investment.intRate)*0.75).toFixed(2)}%
                 </Button>
-                <div className="w-48">
+                <div className="w-full sm:w-48">
                   <input
                     type="text"
                     placeholder="투자금 입력"
@@ -192,12 +168,11 @@ export default function InvestmentSelection() {
               </div>
             ))}
           </div>
-
           {/* Submit Button */}
-          <Button 
+          <Button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white h-14 text-lg mt-8 disabled:opacity-50"
+            className="w-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 text-white h-14 text-base sm:text-lg mt-8 disabled:opacity-50"
           >
             {isSubmitting ? '처리 중...' : '투자 신청 완료하기'}
           </Button>
@@ -206,4 +181,3 @@ export default function InvestmentSelection() {
     </div>
   )
 }
-
