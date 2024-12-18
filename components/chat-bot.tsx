@@ -155,9 +155,9 @@ export function ChatBot() {
     <>
       <Button
         onClick={openChat}
-        className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 shadow-lg z-50"
+        className="fixed bottom-8 left-4 sm:bottom-8 w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 shadow-lg z-50"
       >
-        <MessageCircle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+        <MessageCircle className="w-8 h-8 sm:w-8 sm:h-8 text-white" />
       </Button>
 
       {isModalOpen && (
@@ -216,7 +216,7 @@ export function ChatBot() {
                 />
                 <Button 
                   type="submit" 
-                  className="rounded-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 w-10 h-10 flex-shrink-0"
+                  className="rounded-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 flex-shrink-0"
                   disabled={isLoading}
                 >
                   {isLoading ? (
