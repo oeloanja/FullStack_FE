@@ -4,7 +4,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm install
 COPY . .
-ARG NEXT_PUBLIC_API_URL=http://gateway-service:8080
+ARG NEXT_PUBLIC_API_URL=http://billit.kro.kr
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 RUN npm run build
 
@@ -12,7 +12,7 @@ RUN npm run build
 FROM node:18-slim
 WORKDIR /app
 # 환경변수 추가
-ENV NEXT_PUBLIC_API_URL=http://gateway-service:8080
+ENV NEXT_PUBLIC_API_URL=http://billit.kro.kr
 COPY --from=builder /app/next.config.ts ./
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next
