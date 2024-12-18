@@ -155,14 +155,14 @@ export function ChatBot() {
     <>
       <Button
         onClick={openChat}
-        className="fixed bottom-8 left-8 w-16 h-16 rounded-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 shadow-lg z-50"
+        className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 shadow-lg z-50"
       >
-        <MessageCircle className="w-8 h-8 text-white" />
+        <MessageCircle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
       </Button>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-[400px] h-[600px] flex flex-col relative bg-white">
+        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <Card className="w-full sm:w-[400px] h-[80vh] sm:h-[600px] flex flex-col relative bg-white rounded-t-2xl sm:rounded-2xl">
             <div className="flex items-center p-4 border-b">
               <div className="flex items-center gap-2">
                 <Image
@@ -192,7 +192,7 @@ export function ChatBot() {
                       <MessageCircle className="w-5 h-5 text-white" />
                     </div>
                   )}
-                  <div className={`rounded-2xl px-4 py-2 max-w-[80%] ${
+                  <div className={`rounded-2xl px-4 py-2 max-w-[80%] break-words ${
                     m.role === 'user' ? 'bg-[#23E2C2] text-white' : 'bg-gray-100'
                   }`}>
                     <p dangerouslySetInnerHTML={{ __html: m.content }}></p>
@@ -203,20 +203,20 @@ export function ChatBot() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-4 border-t">
-              <div className="flex gap-2">
+              <div className="flex gap-2 relative">
                 <input
                   type="text"
                   value={isLoading ? "챗봇이 대답을 준비하고 있어요!" : input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="질문하고 싶은 사항을 입력해주세요."
-                  className={`flex-1 px-4 py-2 rounded-full border focus:outline-none focus:ring-2 focus:ring-[#23E2C2] focus:border-transparent ${
+                  className={`flex-1 px-4 py-2 rounded-full border focus:outline-none focus:ring-2 focus:ring-[#23E2C2] focus:border-transparent text-sm ${
                     isLoading ? 'text-gray-400' : 'text-gray-900'
                   }`}
                   disabled={isLoading}
                 />
                 <Button 
                   type="submit" 
-                  className="rounded-full bg-[#23E2C2] hover:bg-[#23E2C2]/90"
+                  className="rounded-full bg-[#23E2C2] hover:bg-[#23E2C2]/90 w-10 h-10 flex-shrink-0"
                   disabled={isLoading}
                 >
                   {isLoading ? (
